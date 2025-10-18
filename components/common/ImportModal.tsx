@@ -1,0 +1,107 @@
+import React, { useContext, useRef } from 'react';
+import { AppContext } from '../../App';
+import { Candidate } from '../../types';
+import { Card } from './Card';
+import { Icon } from './Icon';
+
+interface ImportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => {
+  const { setCandidates } = useContext(AppContext);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target?.result;
+        if (typeof text !== 'string') return;
+        
+        try {
+            const rows = text.split('\n').filter(row => row.trim() !== '');
+            const header = rows[0].split(',').map(h => h.trim());
+            const newCandidates: Candidate[] = [];
+            
+            for (let i = 1; i < rows.length; i++) {
+                const data = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const candidateObj: any = {};
+                
+                for(let j=0; j<header.length; j++) {
+                    let value = data[j];
+                    if (value && value.startsWith('"') && value.endsWith('"')) {
+                        value = value.slice(1, -1).replace(/""/g, '"');
+                    }
+                    
+                    const key = header[j];
+                    
+                    if (['contact', 'emergencyContact', 'qualifications', 'workExperience', 'ratings', 'references', 'statusHistory', 'rejection', 'interview', 'surveillanceReport', 'offer'].includes(key)) {
+                        try {
+                           candidateObj[key] = value ? JSON.parse(value) : null;
+                        } catch {
+                           console.warn(`Could not parse JSON for key ${key} with value:`, value);
+                           candidateObj[key] = null;
+                        }
+                    } else if (['age', 'expectedSalary', 'totalWorkExperience'].includes(key)) {
+                        candidateObj[key] = parseInt(value, 10) || 0;
+                    } else if (['accommodationRequired', 'transportRequired'].includes(key)) {
+                        candidateObj[key] = value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+                    } else {
+                        candidateObj[key] = value;
+                    }
+                }
+                newCandidates.push(candidateObj as Candidate);
+            }
+            setCandidates(newCandidates);
+            alert('Data imported successfully!');
+            onClose();
+        } catch (error) {
+            console.error("Error parsing CSV file:", error);
+            alert("Failed to import data. Please check the file format and console for errors.");
+        } finally {
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
+    reader.readAsText(file);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity">
+      <Card className="w-full max-w-lg" title="Sync Candidate Data">
+        <p className="text-casino-text-muted mb-6">
+          To ensure you are working with the most up-to-date information, please import the latest candidate data file.
+          You can get this file from your HR or Admin.
+        </p>
+        <div className="flex flex-col space-y-4">
+          <button 
+            onClick={handleImportClick} 
+            className="w-full bg-casino-accent hover:bg-yellow-700 text-casino-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
+          >
+            <Icon name="upload" className="w-5 h-5 mr-2" />
+            Import Latest File (.csv)
+          </button>
+          <input type="file" ref={fileInputRef} onChange={handleFileImport} accept=".csv" className="hidden" />
+          
+          <button 
+            onClick={onClose}
+            className="w-full bg-casino-secondary hover:bg-gray-700 text-casino-text font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
+          >
+            Continue with Existing Data
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+};

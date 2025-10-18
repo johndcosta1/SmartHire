@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartHire</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'casino-primary': '#1a202c',
+              'casino-secondary': '#2d3748',
+              'casino-accent': '#c59d5f',
+              'casino-gold': '#d69e2e',
+              'casino-text': '#e2e8f0',
+              'casino-text-muted': '#a0aec0',
+              'casino-success': '#38a169',
+              'casino-danger': '#e53e3e',
+              'casino-warning': '#dd6b20',
+            },
+          },
+        },
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.4"
+  }
+}
+</script>
+<style>
+  .print-only-text {
+    display: none;
+  }
+  @media print {
+    body {
+      background-color: white !important;
+      color: black !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .no-print, .no-print-in-profile {
+      display: none !important;
+    }
+    .print-only-text {
+      display: inline !important;
+      font-size: 14px;
+    }
+    #root, main {
+      display: block !important;
+      height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    #printable-profile {
+      margin: 0;
+      padding: 1rem;
+      color: black;
+      box-shadow: none;
+      border: none;
+    }
+    #printable-profile .bg-casino-secondary, 
+    #printable-profile .bg-casino-primary {
+       background-color: white !important;
+       box-shadow: none;
+       border: 1px solid #ccc;
+    }
+    #printable-profile .text-casino-gold { color: #8B572A !important; }
+    #printable-profile .text-casino-text,
+    #printable-profile .text-casino-text-muted { color: black !important; }
+    
+    /* Force single column layout */
+    #printable-profile .lg\\:grid-cols-3, #printable-profile .grid {
+      display: block !important;
+    }
+    #printable-profile .lg\\:col-span-2 {
+      width: 100% !important;
+    }
+    #printable-profile .space-y-6 > * + * {
+      margin-top: 1.5rem;
+    }
+
+    /* Style form fields to look like a report */
+    #printable-profile input, 
+    #printable-profile textarea, 
+    #printable-profile select {
+      border: none !important;
+      border-bottom: 1px solid #ccc !important;
+      background-color: transparent !important;
+      padding: 2px 0 !important;
+      color: black !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    #printable-profile textarea {
+      resize: none;
+      height: auto;
+    }
+    #printable-profile input:disabled, 
+    #printable-profile textarea:disabled, 
+    #printable-profile select:disabled {
+      color: black !important;
+      opacity: 1;
+    }
+    #printable-profile .border, #printable-profile .border-gray-700 {
+        border-color: #ccc !important;
+    }
+    #printable-profile button {
+       display: none !important;
+    }
+  }
+</style>
+</head>
+  <body class="bg-casino-primary text-casino-text">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
