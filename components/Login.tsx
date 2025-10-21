@@ -1,15 +1,17 @@
+
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { USER_ROLES, ROLE_PASSWORDS } from '../constants';
 import { Card } from './common/Card';
 import { Icon } from './common/Icon';
+import { USER_ROLES, ROLE_PASSWORDS } from '../constants';
 
 interface LoginProps {
   onLoginSuccess: (role: UserRole) => void;
+  onBack: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>(USER_ROLES[0]);
+export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
+  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.HR);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -28,7 +30,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-casino-gold">SmartHire</h1>
-            <p className="text-casino-text-muted mt-2">Please log in to continue</p>
+            <p className="text-casino-text-muted mt-2">Administration Login</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
@@ -39,7 +41,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               onChange={(e) => setSelectedRole(e.target.value as UserRole)}
               className="w-full bg-casino-secondary border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-casino-gold text-casino-text"
             >
-              {USER_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
+              {USER_ROLES.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -51,6 +55,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-casino-secondary border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-casino-gold text-casino-text"
               required
+              autoFocus
             />
           </div>
           {error && <p className="text-sm text-casino-danger text-center">{error}</p>}
@@ -59,6 +64,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <Icon name="shield-check" className="w-5 h-5 mr-2" />
                 Login
             </button>
+          </div>
+           <div className="text-center">
+             <button type="button" onClick={onBack} className="text-sm text-casino-text-muted hover:text-casino-gold">
+                Back to role selection
+             </button>
           </div>
         </form>
       </Card>

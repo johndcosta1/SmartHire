@@ -1,19 +1,21 @@
+
 import { Candidate, ApplicationStatus, UserRole } from './types';
 
 export const USER_ROLES: UserRole[] = [
   UserRole.HR,
   UserRole.Scheduler,
-  UserRole.CasinoManager,
+  UserRole.HOD,
   UserRole.Surveillance,
   UserRole.Admin,
 ];
 
 export const ROLE_PASSWORDS: Record<UserRole, string> = {
-    [UserRole.HR]: 'hr123',
-    [UserRole.Scheduler]: 'scheduler123',
-    [UserRole.CasinoManager]: 'cm123',
-    [UserRole.Surveillance]: 'surv123',
-    [UserRole.Admin]: 'admin123',
+  [UserRole.Admin]: "admin123",
+  [UserRole.HOD]: "hod123",
+  [UserRole.Scheduler]: "scheduler123",
+  [UserRole.Surveillance]: "surv123",
+  [UserRole.HR]: "hr123",
+  [UserRole.Candidate]: "", // Not used for login
 };
 
 export const JOB_ROLES = ['Senior Croupier', 'Bartender', 'Security Officer', 'HR Executive', 'Casino Manager', 'Surveillance Operator', 'Chef', 'Housekeeping Staff'];
@@ -39,6 +41,9 @@ export const MOCK_CANDIDATES: Candidate[] = [
     statusHistory: [
       { id: 'log_001', timestamp: '2023-10-26T10:00:00Z', user: 'HR Aparna', role: UserRole.HR, action: 'Application Created' },
     ],
+    references: [
+        { name: 'Suresh Menon', relation: 'Former Manager', company: 'Goa Grand Casino', contact: '+91 9876543212', email: 'suresh.m@ggc.com' }
+    ]
   },
   {
     id: 'cand_002',
@@ -56,7 +61,7 @@ export const MOCK_CANDIDATES: Candidate[] = [
     createdAt: '2023-10-25T11:30:00Z',
     interview: {
       id: 'int_001',
-      interviewer: 'John Doe (CM)',
+      interviewer: 'John Doe (HOD)',
       date: '2023-10-28',
       time: '14:00',
       type: 'In-Person',
@@ -96,7 +101,8 @@ export const MOCK_CANDIDATES: Candidate[] = [
     statusHistory: [
       { id: 'log_003a', timestamp: '2023-10-24T09:00:00Z', user: 'HR Aparna', role: UserRole.HR, action: 'Application Created' },
       { id: 'log_003b', timestamp: '2023-10-24T12:00:00Z', user: 'Scheduler Jane', role: UserRole.Scheduler, action: 'Interview Scheduled' },
-      { id: 'log_003c', timestamp: '2023-10-26T12:00:00Z', user: 'CM Mike', role: UserRole.CasinoManager, action: 'Interview Completed, Selected for Surveillance' },
+      { id: 'log_003c', timestamp: '2023-10-26T12:00:00Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Interview Completed' },
+      { id: 'log_003d', timestamp: '2023-10-26T12:00:01Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Selected by HOD' },
     ],
   },
   {
@@ -118,7 +124,10 @@ export const MOCK_CANDIDATES: Candidate[] = [
     offer: { salary: 72000, joiningDate: '2023-11-15', accommodationDetails: 'N/A' },
     statusHistory: [
         { id: 'log_004a', timestamp: '2023-10-22T15:00:00Z', user: 'HR Aparna', role: UserRole.HR, action: 'Application Created'},
-        { id: 'log_004b', timestamp: '2023-10-26T10:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Surveillance Cleared'},
+        { id: 'log_004b', timestamp: '2023-10-23T11:00:00Z', user: 'Scheduler Jane', role: UserRole.Scheduler, action: 'Interview Scheduled for 2023-10-25 10:00' },
+        { id: 'log_004c', timestamp: '2023-10-25T11:00:00Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Interview Completed' },
+        { id: 'log_004d', timestamp: '2023-10-25T11:00:01Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Selected by HOD' },
+        { id: 'log_004e', timestamp: '2023-10-26T10:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Surveillance Cleared'},
     ]
   },
     {
@@ -141,9 +150,13 @@ export const MOCK_CANDIDATES: Candidate[] = [
     offer: { salary: 125000, joiningDate: '2023-10-01', accommodationDetails: 'Villa 2B' },
     statusHistory: [
         { id: 'log_005a', timestamp: '2023-09-01T10:00:00Z', user: 'HR Aparna', role: UserRole.HR, action: 'Application Created'},
-        { id: 'log_005b', timestamp: '2023-09-20T10:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Offer Accepted'},
-        { id: 'log_005d', timestamp: '2023-09-22T11:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Joining Scheduled'},
-        { id: 'log_005e', timestamp: '2023-10-01T09:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Marked as Joined'},
+        { id: 'log_005b', timestamp: '2023-09-08T16:00:00Z', user: 'Scheduler Jane', role: UserRole.Scheduler, action: 'Interview Scheduled for 2023-09-10 11:00'},
+        { id: 'log_005c', timestamp: '2023-09-10T12:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Interview Completed' },
+        { id: 'log_005d', timestamp: '2023-09-10T12:00:01Z', user: 'Admin', role: UserRole.Admin, action: 'Selected by Admin' },
+        { id: 'log_005e', timestamp: '2023-09-18T10:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Surveillance Cleared' },
+        { id: 'log_005f', timestamp: '2023-09-20T10:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Offer Accepted'},
+        { id: 'log_005g', timestamp: '2023-09-22T11:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Joining Scheduled'},
+        { id: 'log_005h', timestamp: '2023-10-01T09:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Marked as Joined'},
     ]
   },
    {
@@ -170,7 +183,10 @@ export const MOCK_CANDIDATES: Candidate[] = [
      surveillanceReport: { status: 'Flagged', reportUrl: 'surv_report_anita.pdf', notes: 'ID provided does not match government records.' },
     statusHistory: [
         { id: 'log_006a', timestamp: '2023-10-23T13:00:00Z', user: 'HR Bot', role: UserRole.HR, action: 'Application Created'},
-        { id: 'log_006b', timestamp: '2023-10-27T16:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Application Rejected'},
+        { id: 'log_006b', timestamp: '2023-10-24T10:00:00Z', user: 'Scheduler Jane', role: UserRole.Scheduler, action: 'Interview Scheduled for 2023-10-25 15:00' },
+        { id: 'log_006c', timestamp: '2023-10-25T16:00:00Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Interview Completed' },
+        { id: 'log_006d', timestamp: '2023-10-25T16:00:01Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Selected by HOD' },
+        { id: 'log_006e', timestamp: '2023-10-27T16:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Application Rejected'},
     ]
   },
 ];

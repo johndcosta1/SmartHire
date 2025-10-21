@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Candidate, UserRole, ApplicationStatus } from '../types';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Candidate, UserRole, ApplicationStatus, AuditLog } from '../types';
 import { Card } from './common/Card';
 import { Badge } from './common/Badge';
 import { Icon } from './common/Icon';
 import { STATUS_COLORS, DEPARTMENTS, MARITAL_STATUSES } from '../constants';
 import { FormField } from './common/FormField';
+import { HiringStatusTracker } from './common/HiringStatusTracker';
 
 interface ApplicantProfileProps {
   candidates: Candidate[];
@@ -79,13 +79,43 @@ const AdminPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate
     );
 };
 
-const CMPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => void}> = ({candidate, updateCandidate}) => {
+const HODPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => void}> = ({candidate, updateCandidate}) => {
     const handleDecision = (status: ApplicationStatus, action: string) => {
+         const now = new Date();
+         let newStatusHistory = [...candidate.statusHistory];
+
+         // For final decisions (Selected/Rejected), add two log entries.
+         if (status === ApplicationStatus.PendingSurveillance || status === ApplicationStatus.Rejected) {
+            newStatusHistory.push({
+                id: `log_${now.getTime()}_a`,
+                timestamp: now.toISOString(),
+                user: 'HOD',
+                role: UserRole.HOD,
+                action: 'Interview Completed'
+            });
+            newStatusHistory.push({
+                id: `log_${now.getTime()}_b`,
+                timestamp: new Date(now.getTime() + 1).toISOString(), // Ensure different timestamp for key
+                user: 'HOD',
+                role: UserRole.HOD,
+                action: action // This will be 'Selected by HOD' or 'Rejected after interview'
+            });
+         } else {
+             // For 'Pending' status, add a single entry.
+            newStatusHistory.push({
+                id: `log_${now.getTime()}`,
+                timestamp: now.toISOString(),
+                user: 'HOD',
+                role: UserRole.HOD,
+                action: action
+            });
+         }
+        
          const updatedCandidate: Candidate = {
             ...candidate,
             status,
-            rejection: status === ApplicationStatus.Rejected ? { actor: UserRole.CasinoManager, reason: 'Rejected after interview', timestamp: new Date().toISOString() } : candidate.rejection,
-            statusHistory: [...candidate.statusHistory, { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: 'Casino Manager', role: UserRole.CasinoManager, action }]
+            rejection: status === ApplicationStatus.Rejected ? { actor: UserRole.HOD, reason: 'Rejected after interview', timestamp: now.toISOString() } : candidate.rejection,
+            statusHistory: newStatusHistory
         };
         updateCandidate(updatedCandidate);
     };
@@ -94,7 +124,7 @@ const CMPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) =
         <ActionPanel title="Interview Feedback" icon="user-plus">
             <p className="text-casino-text-muted mb-4">Provide the outcome of the interview.</p>
             <div className="flex flex-col space-y-3 mt-4">
-                <button type="button" onClick={() => handleDecision(ApplicationStatus.PendingSurveillance, 'Selected for Surveillance')} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="check-circle" className="w-5 h-5 mr-2"/>Selected</button>
+                <button type="button" onClick={() => handleDecision(ApplicationStatus.PendingSurveillance, 'Selected by HOD')} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="check-circle" className="w-5 h-5 mr-2"/>Selected</button>
                 <button type="button" onClick={() => handleDecision(ApplicationStatus.InterviewCompleted, 'Interview outcome is pending')} className="bg-casino-warning hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="clock" className="w-5 h-5 mr-2"/>Pending</button>
                 <button type="button" onClick={() => handleDecision(ApplicationStatus.Rejected, 'Rejected after interview')} className="bg-casino-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="x-circle" className="w-5 h-5 mr-2"/>Rejected</button>
             </div>
@@ -116,7 +146,7 @@ const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candi
             status: ApplicationStatus.InterviewScheduled,
             interview: {
                 id: `int_${candidate.id.slice(-3)}`,
-                interviewer: 'Casino Manager',
+                interviewer: 'HOD',
                 date: interviewDate,
                 time: interviewTime,
                 type: 'In-Person',
@@ -158,23 +188,89 @@ const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candi
     );
 };
 
+const StarRating: React.FC<{
+  score: number;
+  onRate: (rating: number) => void;
+  disabled?: boolean;
+}> = ({ score, onRate, disabled }) => {
+  return (
+    <div className="flex space-x-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          type="button"
+          key={star}
+          onClick={() => !disabled && onRate(star)}
+          className={`text-3xl transition-transform duration-150 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-125'} ${star <= score ? 'text-casino-gold' : 'text-gray-600'}`}
+          aria-label={`Rate ${star} out of 5`}
+          disabled={disabled}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
 export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, currentRole, updateCandidate }) => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const candidate = candidates.find(c => c.id === id);
 
   const [formData, setFormData] = useState<Candidate | null>(candidate || null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   
   const canEdit = currentRole === UserRole.HR;
-  const canEditJobSection = currentRole === UserRole.HR || currentRole === UserRole.CasinoManager;
-  const canEditHRRatings = currentRole === UserRole.HR;
-  const canEditManagerRatings = currentRole === UserRole.CasinoManager;
+  const canEditJobSection = currentRole === UserRole.HR || currentRole === UserRole.HOD;
 
   useEffect(() => {
     if (candidate) {
         setFormData(candidate);
     }
   }, [candidate]);
+
+  useEffect(() => {
+    if (currentRole !== UserRole.HR) return;
+
+    const hrRatings = formData?.ratings?.hr;
+    if (hrRatings) {
+        const scores = [
+            hrRatings.personality,
+            hrRatings.attitude,
+            hrRatings.presentable,
+            hrRatings.communication,
+            hrRatings.confidence,
+        ].filter((s): s is number => typeof s === 'number' && s >= 1 && s <= 5);
+
+        const newScore = scores.length > 0
+            ? scores.reduce((a, b) => a + b, 0) / scores.length
+            : 0;
+
+        if (hrRatings.score !== newScore) {
+            setFormData(prev => {
+                if (!prev || !prev.ratings || !prev.ratings.hr) return prev;
+                return {
+                    ...prev,
+                    ratings: {
+                        ...prev.ratings,
+                        hr: {
+                            ...prev.ratings.hr,
+                            score: newScore,
+                        },
+                    },
+                };
+            });
+        }
+    }
+  }, [
+    formData?.ratings?.hr?.personality,
+    formData?.ratings?.hr?.attitude,
+    formData?.ratings?.hr?.presentable,
+    formData?.ratings?.hr?.communication,
+    formData?.ratings?.hr?.confidence,
+    currentRole,
+    formData?.ratings?.hr,
+  ]);
+
 
   if (!candidate || !formData) {
     return <div className="text-center p-10">
@@ -246,6 +342,30 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     });
   };
 
+  const handleRatingChange = (name: string, rating: number) => {
+    if (!canEdit) return;
+    const parts = name.split('.');
+    setFormData(prev => {
+        if (!prev || parts.length !== 3) return prev;
+        
+        const [parent, child, grandchild] = parts;
+        const prevParent = (prev as any)[parent] || {};
+        const prevChild = prevParent[child] || {};
+        
+        return {
+            ...prev,
+            [parent]: {
+                ...prevParent,
+                [child]: {
+                    ...prevChild,
+                    [grandchild]: rating,
+                },
+            },
+        };
+    });
+};
+
+
   const handleRepeatingChange = (section: 'qualifications' | 'workExperience' | 'references', index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       if (!canEdit) return;
       const { name, value } = e.target;
@@ -269,44 +389,51 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   };
 
   const handleUpdate = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!candidate) return;
+    e.preventDefault();
+    if (!candidate || !formData) return;
 
-      if (currentRole === UserRole.HR) {
-          const finalCandidate: Candidate = {
-              ...formData,
-              ratings: {
-                  ...candidate.ratings,
-                  hr: formData.ratings?.hr,
-              },
-          };
-          updateCandidate(finalCandidate);
-          alert("Candidate details updated!");
-          return;
-      }
+    if (currentRole === UserRole.HR) {
+      const hrInterviewerName = formData.ratings?.hr?.interviewer || 'HR Staff';
+      const newAuditLog: AuditLog = {
+        id: `log_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        user: hrInterviewerName,
+        role: UserRole.HR,
+        action: 'HR Interview & Evaluation Updated',
+      };
 
-      if (currentRole === UserRole.CasinoManager) {
-          const finalCandidate: Candidate = {
-              ...candidate,
-              vacancy: formData.vacancy,
-              positionOffered: formData.positionOffered,
-              department: formData.department,
-              expectedSalary: formData.expectedSalary,
-              accommodationRequired: formData.accommodationRequired,
-              transportRequired: formData.transportRequired,
-              ratings: {
-                  // Explicitly preserve HR ratings from original candidate
-                  hr: candidate.ratings?.hr,
-                  // Take the manager-editable fields from the current form state
-                  manager: formData.ratings?.manager,
-                  cm: formData.ratings?.cm,
-                  department: formData.ratings?.department,
-              },
-          };
-          updateCandidate(finalCandidate);
-          alert("Job & Compensation and Manager ratings updated!");
-          return;
-      }
+      const finalCandidate: Candidate = {
+        ...formData,
+        statusHistory: [...formData.statusHistory, newAuditLog],
+      };
+
+      updateCandidate(finalCandidate);
+      alert("Candidate details updated successfully!");
+      navigate('/applicants');
+      return;
+    }
+
+    if (currentRole === UserRole.HOD) {
+      const finalCandidate: Candidate = {
+        ...candidate,
+        vacancy: formData.vacancy,
+        positionOffered: formData.positionOffered,
+        department: formData.department,
+        expectedSalary: formData.expectedSalary,
+        accommodationRequired: formData.accommodationRequired,
+        transportRequired: formData.transportRequired,
+        ratings: {
+          hr: candidate.ratings?.hr,
+          manager: formData.ratings?.manager,
+          cm: formData.ratings?.cm,
+          department: formData.ratings?.department,
+        },
+      };
+      updateCandidate(finalCandidate);
+      alert("Candidate details updated successfully!");
+      navigate('/applicants');
+      return;
+    }
   };
   
   const handlePrint = () => {
@@ -317,8 +444,8 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
       if (currentRole === UserRole.Scheduler && candidate.status === ApplicationStatus.New) {
         return <SchedulerPanel candidate={candidate} updateCandidate={updateCandidate} />;
       }
-      if (currentRole === UserRole.CasinoManager && candidate.status === ApplicationStatus.InterviewScheduled) {
-        return <CMPanel candidate={candidate} updateCandidate={updateCandidate} />;
+      if (currentRole === UserRole.HOD && candidate.status === ApplicationStatus.InterviewScheduled) {
+        return <HODPanel candidate={candidate} updateCandidate={updateCandidate} />;
       }
       if (currentRole === UserRole.Surveillance && candidate.status === ApplicationStatus.PendingSurveillance) {
         return <SurveillancePanel candidate={candidate} updateCandidate={updateCandidate} />;
@@ -329,7 +456,14 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
       return null;
   }
   
-  const canSaveChanges = currentRole === UserRole.HR || currentRole === UserRole.CasinoManager;
+  const getTestRating = (score: number) => {
+    if (score >= 35) return { text: '⭐ Excellent', color: 'text-casino-success' };
+    if (score >= 28) return { text: '✅ Good', color: 'text-teal-400' };
+    if (score >= 20) return { text: '⚙️ Average', color: 'text-casino-warning' };
+    return { text: '❌ Below Average', color: 'text-casino-danger' };
+  };
+
+  const canSaveChanges = currentRole === UserRole.HR || currentRole === UserRole.HOD;
 
   return (
     <div id="printable-profile">
@@ -357,7 +491,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                 </div>
             </div>
              <div className="flex items-center space-x-4">
-                {currentRole === UserRole.CasinoManager && (
+                {currentRole === UserRole.HOD && (
                 <button
                     type="button"
                     onClick={handlePrint}
@@ -370,6 +504,8 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                 <Badge status={formData.status} />
             </div>
         </div>
+
+        <HiringStatusTracker status={formData.status} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -388,28 +524,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                       <FormField label="Marital Status" name="maritalStatus" type="select" options={MARITAL_STATUSES} value={formData.maritalStatus || 'Single'} onChange={handleChange} disabled={!canEdit} />
                   </div>
               </Card>
-
-              <Card title="Job & Compensation">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <FormField label="Job Role Applied For" name="vacancy" type="text" value={formData.vacancy} onChange={handleChange} placeholder="e.g., Senior Croupier" required disabled={!canEditJobSection} />
-                      <FormField label="Position Offered" name="positionOffered" value={formData.positionOffered || ''} onChange={handleChange} disabled={!canEditJobSection} />
-                      <FormField label="Department" name="department" type="select" options={DEPARTMENTS} value={formData.department || ''} onChange={handleChange} disabled={!canEditJobSection} />
-                      <FormField label="Expected Salary" name="expectedSalary" type="number" value={formData.expectedSalary} onChange={handleChange} disabled={!canEditJobSection} />
-                      <FormField label="Accommodation Required" name="accommodationRequired" type="checkbox" checked={formData.accommodationRequired} onChange={handleChange} disabled={!canEditJobSection} />
-                      <FormField label="Transport Required" name="transportRequired" type="checkbox" checked={formData.transportRequired} onChange={handleChange} disabled={!canEditJobSection} />
-                  </div>
-              </Card>
               
-               <Card title="Interview & Ratings">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <FormField label="HR Interviewer Name" name="ratings.hr.interviewer" value={formData.ratings?.hr?.interviewer || ''} onChange={handleChange} disabled={!canEditHRRatings}/>
-                      <FormField label="HR Total Rating (0-3)" name="ratings.hr.score" type="number" min="0" max="3" value={formData.ratings?.hr?.score || ''} onChange={handleChange} disabled={!canEditHRRatings}/>
-                      <FormField label="Manager Total Rating (0-3)" name="ratings.manager.score" type="number" min="0" max="3" value={formData.ratings?.manager?.score || ''} onChange={handleChange} disabled={!canEditManagerRatings}/>
-                      <FormField label="CM Total Rating (0-3)" name="ratings.cm.score" type="number" min="0" max="3" value={formData.ratings?.cm?.score || ''} onChange={handleChange} disabled={!canEditManagerRatings}/>
-                      <FormField label="Department Interviewer Name" name="ratings.department.interviewer" value={formData.ratings?.department?.interviewer || ''} onChange={handleChange} disabled={!canEditManagerRatings}/>
-                  </div>
-              </Card>
-
                <Card title="Qualifications & Experience">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField label="Total Work Experience (Years)" name="totalWorkExperience" type="number" value={formData.totalWorkExperience || ''} onChange={handleChange} disabled={!canEdit}/>
@@ -439,6 +554,140 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                           </div>
                       ))}
                       {canEdit && <button type="button" onClick={() => addRepeatingField('workExperience')} className="text-sm text-casino-gold no-print-in-profile">+ Add Experience</button>}
+                  </div>
+                  <div className="mt-4">
+                       <h4 className="text-casino-text-muted font-semibold mb-2">References (Max 3)</h4>
+                      {(formData.references || []).map((r, i) => (
+                           <div key={i} className="p-2 border border-gray-700 rounded mb-2 space-y-2">
+                               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                   <input name="name" value={r.name} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Name" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
+                                   <input name="relation" value={r.relation} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Relation" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
+                                   <input name="company" value={r.company} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
+                               </div>
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                   <input name="contact" value={r.contact} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Contact No." className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
+                                   <input name="email" type="email" value={r.email} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Email" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
+                               </div>
+                          </div>
+                      ))}
+                      {canEdit && <button type="button" onClick={() => addRepeatingField('references')} className="text-sm text-casino-gold no-print-in-profile">+ Add Reference</button>}
+                  </div>
+              </Card>
+
+               <Card title="HR Interview & Ratings">
+                    <div>
+                        {/* HR Evaluation Section */}
+                        <div className="pt-4">
+                            <h4 className="text-lg font-semibold text-casino-text-muted mb-3">HR Evaluation</h4>
+                             <div className="space-y-6">
+                                <FormField label="HR Interviewer Name" name="ratings.hr.interviewer" value={formData.ratings?.hr?.interviewer || ''} onChange={handleChange} disabled={!canEdit} />
+                                
+                                <div className="space-y-6">
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-casino-text-muted">Overall Personality</label>
+                                            <StarRating score={formData.ratings?.hr?.personality || 0} onRate={(r) => handleRatingChange('ratings.hr.personality', r)} disabled={!canEdit} />
+                                        </div>
+                                        <p className="text-xs text-casino-text-muted mt-1">Observe the candidate’s overall demeanor, including appearance, smile, and general impression.</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-casino-text-muted">Attitude</label>
+                                            <StarRating score={formData.ratings?.hr?.attitude || 0} onRate={(r) => handleRatingChange('ratings.hr.attitude', r)} disabled={!canEdit} />
+                                        </div>
+                                        <p className="text-xs text-casino-text-muted mt-1">Assess whether the candidate demonstrates a positive and cooperative attitude.</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-casino-text-muted">Presentable</label>
+                                            <StarRating score={formData.ratings?.hr?.presentable || 0} onRate={(r) => handleRatingChange('ratings.hr.presentable', r)} disabled={!canEdit} />
+                                        </div>
+                                        <p className="text-xs text-casino-text-muted mt-1">Check if the candidate maintains a professional and well-groomed appearance.</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-casino-text-muted">Communication Skills</label>
+                                            <StarRating score={formData.ratings?.hr?.communication || 0} onRate={(r) => handleRatingChange('ratings.hr.communication', r)} disabled={!canEdit} />
+                                        </div>
+                                        <p className="text-xs text-casino-text-muted mt-1">Evaluate how clearly and fluently the candidate communicates.</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-casino-text-muted">Confidence</label>
+                                            <StarRating score={formData.ratings?.hr?.confidence || 0} onRate={(r) => handleRatingChange('ratings.hr.confidence', r)} disabled={!canEdit} />
+                                        </div>
+                                        <p className="text-xs text-casino-text-muted mt-1">Note the candidate’s confidence while speaking and presenting themselves.</p>
+                                    </div>
+                                </div>
+                                
+                                <FormField 
+                                    label="HR Interviewer's Evaluation"
+                                    name="ratings.hr.evaluation"
+                                    type="textarea"
+                                    rows={4}
+                                    value={formData.ratings?.hr?.evaluation || ''}
+                                    onChange={handleChange}
+                                    disabled={!canEdit}
+                                    placeholder="Provide a summary of the interview, candidate's strengths, weaknesses, and overall impression..."
+                                />
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-casino-text-muted mb-1">HR Final Rating (Calculated)</label>
+                                    <div className="flex items-center space-x-4 p-3 bg-casino-primary rounded-md">
+                                        <span className="text-2xl font-bold text-casino-gold">
+                                            {(formData.ratings?.hr?.score || 0).toFixed(1)} / 5
+                                        </span>
+                                        <div className="w-full bg-gray-700 rounded-full h-4">
+                                            <div
+                                                className="bg-casino-gold h-4 rounded-full transition-all duration-500"
+                                                style={{ width: `${((formData.ratings?.hr?.score || 0) / 5) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-lg font-semibold text-casino-text-muted">
+                                            {(((formData.ratings?.hr?.score || 0) / 5) * 100).toFixed(0)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+              {candidate.preEmploymentTest && (
+                <Card title="Pre-Employment Test">
+                    <div className="flex justify-around items-center text-center">
+                        <div>
+                            <p className="text-casino-text-muted text-sm">Completed On</p>
+                            <p className="font-semibold text-casino-text">{new Date(candidate.preEmploymentTest.completedAt).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                            <p className="text-casino-text-muted text-sm">Score</p>
+                            <p className="text-3xl font-bold text-casino-gold">{candidate.preEmploymentTest.score} <span className="text-lg text-casino-text-muted">/ 40</span></p>
+                        </div>
+                         <div>
+                            <p className="text-casino-text-muted text-sm">Rating</p>
+                            <p className={`text-xl font-bold ${getTestRating(candidate.preEmploymentTest.score).color}`}>{getTestRating(candidate.preEmploymentTest.score).text}</p>
+                        </div>
+                    </div>
+                </Card>
+              )}
+
+              <Card title="Job & Compensation">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <FormField label="Job Role Applied For" name="vacancy" type="text" value={formData.vacancy} onChange={handleChange} placeholder="e.g., Senior Croupier" required disabled={!canEditJobSection} />
+                      <FormField label="Department" name="department" type="select" options={DEPARTMENTS} value={formData.department || ''} onChange={handleChange} disabled={!canEditJobSection} />
+                      <FormField label="Expected Salary" name="expectedSalary" type="number" value={formData.expectedSalary} onChange={handleChange} disabled={!canEditJobSection} />
+                      <FormField label="Position Offered" name="positionOffered" value={formData.positionOffered || ''} onChange={handleChange} disabled={!canEditJobSection} />
+                      <FormField label="Accommodation Required" name="accommodationRequired" type="checkbox" checked={formData.accommodationRequired} onChange={handleChange} disabled={!canEditJobSection} />
+                      <FormField label="Transport Required" name="transportRequired" type="checkbox" checked={formData.transportRequired} onChange={handleChange} disabled={!canEditJobSection} />
+                  </div>
+                   <div className="mt-6 pt-4 border-t border-gray-700">
+                      <h4 className="text-lg font-semibold text-casino-text-muted mb-3">Other Evaluations</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <FormField label="Manager Total Rating (1-5)" name="ratings.manager.score" type="number" min="1" max="5" value={formData.ratings?.manager?.score || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
+                          <FormField label="CM Total Rating (1-5)" name="ratings.cm.score" type="number" min="1" max="5" value={formData.ratings?.cm?.score || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
+                          <FormField label="Department Interviewer Name" name="ratings.department.interviewer" value={formData.ratings?.department?.interviewer || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
+                      </div>
                   </div>
               </Card>
               

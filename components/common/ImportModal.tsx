@@ -27,33 +27,52 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
         if (typeof text !== 'string') return;
         
         try {
-            const rows = text.split('\n').filter(row => row.trim() !== '');
-            const header = rows[0].split(',').map(h => h.trim());
+            const rows = text.split(/\r?\n/).filter(row => row.trim() !== '');
+            if (rows.length < 2) {
+                alert("CSV file is empty or contains only a header.");
+                return;
+            }
+            const header = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
             const newCandidates: Candidate[] = [];
             
+            const defaultValues: Record<string, any> = {
+                contact: { phone: '', email: '' },
+                emergencyContact: { name: '', phone: '' },
+                statusHistory: [],
+                qualifications: [],
+                workExperience: [],
+                references: [],
+            };
+
             for (let i = 1; i < rows.length; i++) {
                 const data = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 const candidateObj: any = {};
                 
                 for(let j=0; j<header.length; j++) {
                     let value = data[j];
-                    if (value && value.startsWith('"') && value.endsWith('"')) {
-                        value = value.slice(1, -1).replace(/""/g, '"');
+                    if (typeof value === 'string') {
+                      if (value.startsWith('"') && value.endsWith('"')) {
+                          value = value.slice(1, -1).replace(/""/g, '"');
+                      }
+                    } else {
+                      value = '';
                     }
                     
                     const key = header[j];
+                    if (!key) continue;
                     
                     if (['contact', 'emergencyContact', 'qualifications', 'workExperience', 'ratings', 'references', 'statusHistory', 'rejection', 'interview', 'surveillanceReport', 'offer'].includes(key)) {
                         try {
-                           candidateObj[key] = value ? JSON.parse(value) : null;
+                           const parsedValue = value ? JSON.parse(value) : null;
+                           candidateObj[key] = parsedValue ?? (defaultValues[key] ?? null);
                         } catch {
                            console.warn(`Could not parse JSON for key ${key} with value:`, value);
-                           candidateObj[key] = null;
+                           candidateObj[key] = defaultValues[key] ?? null;
                         }
                     } else if (['age', 'expectedSalary', 'totalWorkExperience'].includes(key)) {
                         candidateObj[key] = parseInt(value, 10) || 0;
                     } else if (['accommodationRequired', 'transportRequired'].includes(key)) {
-                        candidateObj[key] = value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+                        candidateObj[key] = (value || '').toLowerCase() === 'true' || (value || '').toLowerCase() === 'yes';
                     } else {
                         candidateObj[key] = value;
                     }

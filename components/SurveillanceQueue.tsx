@@ -57,7 +57,7 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{candidate.vacancy}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{new Date(candidate.statusHistory.find(h => h.action.includes('Selected for Surveillance'))?.timestamp || candidate.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{new Date(candidate.statusHistory.find(h => h.action.startsWith('Selected by'))?.timestamp || candidate.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{candidate.interview?.interviewer || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button onClick={() => navigate(`/applicants/${candidate.id}`)} className="text-casino-gold hover:text-yellow-400 font-semibold">View Profile</button>

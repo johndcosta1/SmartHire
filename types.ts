@@ -1,9 +1,11 @@
+
 export enum UserRole {
   Admin = "Admin",
-  CasinoManager = "Casino Manager",
+  HOD = "HOD",
   Scheduler = "Scheduler",
   Surveillance = "Surveillance",
   HR = "HR",
+  Candidate = "Candidate",
 }
 
 export enum ApplicationStatus {
@@ -83,10 +85,25 @@ export interface Candidate {
 
   // Interview & Ratings
   ratings?: {
-    hr?: { score: number; interviewer: string };
+    hr?: {
+      score: number;
+      interviewer: string;
+      personality?: number;
+      attitude?: number;
+      presentable?: number;
+      communication?: number;
+      confidence?: number;
+      evaluation?: string;
+    };
     manager?: { score: number };
     cm?: { score: number };
     department?: { interviewer: string };
+  };
+  
+  preEmploymentTest?: {
+    score: number;
+    answers: { [key: string]: string }; // questionId: answerKey
+    completedAt: string;
   };
 
   // References

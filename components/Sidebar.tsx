@@ -9,13 +9,13 @@ interface SidebarProps {
 }
 
 const navLinks: { to: string; text: string; icon: React.ComponentProps<typeof Icon>['name']; roles: UserRole[] }[] = [
-  { to: '/', text: 'Dashboard', icon: 'dashboard', roles: [UserRole.Admin, UserRole.CasinoManager, UserRole.HR, UserRole.Scheduler, UserRole.Surveillance] },
-  { to: '/applicants', text: 'Applicants', icon: 'users', roles: [UserRole.Admin, UserRole.CasinoManager, UserRole.HR, UserRole.Scheduler, UserRole.Surveillance] },
+  { to: '/', text: 'Dashboard', icon: 'dashboard', roles: [UserRole.Admin, UserRole.HOD, UserRole.HR, UserRole.Scheduler, UserRole.Surveillance] },
+  { to: '/applicants', text: 'Applicants', icon: 'users', roles: [UserRole.Admin, UserRole.HOD, UserRole.HR, UserRole.Scheduler, UserRole.Surveillance] },
   { to: '/applicants/new', text: 'New Candidate', icon: 'user-plus', roles: [UserRole.HR] },
   { to: '/schedule', text: 'Interview Calendar', icon: 'calendar', roles: [UserRole.Admin, UserRole.Scheduler] },
   { to: '/surveillance', text: 'Surveillance Queue', icon: 'shield-check', roles: [UserRole.Admin, UserRole.Surveillance] },
   { to: '/offers', text: 'HR Offers', icon: 'briefcase', roles: [UserRole.Admin, UserRole.HR] },
-  { to: '/reports', text: 'Reports', icon: 'reports', roles: [UserRole.Admin, UserRole.HR, UserRole.CasinoManager] },
+  { to: '/reports', text: 'Reports', icon: 'reports', roles: [UserRole.Admin, UserRole.HR, UserRole.HOD] },
   { to: '/settings', text: 'Settings', icon: 'cog', roles: [UserRole.Admin] },
 ];
 

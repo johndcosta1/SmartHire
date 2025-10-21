@@ -1,9 +1,7 @@
 
-
 import React, { useState, useContext, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
-import { Candidate, ApplicationStatus } from '../types';
+import { Candidate, UserRole } from '../types';
 import { Card } from './common/Card';
 import { Icon } from './common/Icon';
 import { FormField } from './common/FormField';
@@ -16,6 +14,7 @@ type FormData = Omit<Candidate, 'id' | 'status' | 'statusHistory' | 'rejection' 
 const initialFormData: Partial<FormData> = {
     fullName: '',
     createdAt: new Date().toISOString().split('T')[0],
+    dob: '',
     photoUrl: '',
     age: 0,
     address: '',
@@ -35,17 +34,31 @@ const initialFormData: Partial<FormData> = {
     workExperience: [],
     languagesKnown: '',
     ratings: {
-        hr: { score: 0, interviewer: '' },
-        manager: { score: 0 },
-        cm: { score: 0 },
+        hr: { 
+            score: 0, 
+            interviewer: '',
+            personality: undefined,
+            attitude: undefined,
+            presentable: undefined,
+            communication: undefined,
+            confidence: undefined,
+            evaluation: '',
+        },
+        manager: { score: 1 },
+        cm: { score: 1 },
         department: { interviewer: '' }
     },
     references: [],
 };
 
-export const CreateCandidateForm: React.FC = () => {
-    const { addCandidate } = useContext(AppContext);
-    const navigate = useNavigate();
+interface CreateCandidateFormProps {
+  onSubmissionSuccess?: (candidate: Candidate) => void;
+  onCancel?: () => void;
+}
+
+
+export const CreateCandidateForm: React.FC<CreateCandidateFormProps> = ({ onSubmissionSuccess, onCancel }) => {
+    const { addCandidate, currentRole } = useContext(AppContext);
     const [formData, setFormData] = useState(initialFormData);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const photoInputRef = useRef<HTMLInputElement>(null);
@@ -103,17 +116,25 @@ export const CreateCandidateForm: React.FC = () => {
         const finalData: Partial<Candidate> = {
             ...formData,
             photoUrl: photoPreview || undefined,
-            createdAt: formData.createdAt,
-            dob: '', // Assuming DOB would be collected separately or derived
         };
-        addCandidate(finalData);
-        navigate('/applicants');
+        const newCandidate = addCandidate(finalData);
+        if (onSubmissionSuccess) {
+            onSubmissionSuccess(newCandidate);
+        }
+    };
+    
+    const handleCancel = () => {
+        if (onCancel) {
+            onCancel();
+        }
     };
 
     return (
         <form onSubmit={handleSubmit}>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-casino-gold">Create New Candidate</h1>
+                <h1 className="text-3xl font-bold text-casino-gold">
+                    {currentRole === UserRole.Candidate ? 'Candidate Registration' : 'Create New Candidate'}
+                </h1>
             </div>
 
             <div className="space-y-6">
@@ -136,7 +157,8 @@ export const CreateCandidateForm: React.FC = () => {
                             </div>
                             <div className="flex-grow grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 <FormField label="Full Name" name="fullName" value={formData.fullName!} onChange={handleChange} required />
-                                <FormField label="Entry Date" name="createdAt" type="date" value={formData.createdAt!} onChange={handleChange} required />
+                                <FormField label="Date of Birth" name="dob" type="date" value={formData.dob!} onChange={handleChange} required />
+
                             </div>
                         </div>
 
@@ -155,7 +177,6 @@ export const CreateCandidateForm: React.FC = () => {
                 <Card title="Job & Compensation">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <FormField label="Job Role Applied For" name="vacancy" type="text" value={formData.vacancy!} onChange={handleChange} placeholder="e.g., Senior Croupier" required />
-                        <FormField label="Position Offered" name="positionOffered" value={formData.positionOffered!} onChange={handleChange} />
                         <FormField label="Department" name="department" type="select" options={DEPARTMENTS} value={formData.department!} onChange={handleChange} />
                         <FormField label="Expected Salary" name="expectedSalary" type="number" value={formData.expectedSalary!} onChange={handleChange} />
                         <FormField label="Accommodation Required" name="accommodationRequired" type="checkbox" checked={formData.accommodationRequired!} onChange={handleChange} />
@@ -193,24 +214,44 @@ export const CreateCandidateForm: React.FC = () => {
                         ))}
                         <button type="button" onClick={() => addRepeatingField('workExperience')} className="text-sm text-casino-gold">+ Add Experience</button>
                     </div>
-                </Card>
-                
-                <Card title="Interview & Ratings">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <FormField label="HR Interviewer Name" name="ratings.hr.interviewer" value={formData.ratings!.hr!.interviewer} onChange={handleChange} />
-                        <FormField label="HR Total Rating (0-3)" name="ratings.hr.score" type="number" min="0" max="3" value={formData.ratings!.hr!.score} onChange={handleChange} />
-                        <FormField label="Manager Total Rating (0-3)" name="ratings.manager.score" type="number" min="0" max="3" value={formData.ratings!.manager!.score} onChange={handleChange} />
-                        <FormField label="CM Total Rating (0-3)" name="ratings.cm.score" type="number" min="0" max="3" value={formData.ratings!.cm!.score} onChange={handleChange} />
-                        <FormField label="Department Interviewer Name" name="ratings.department.interviewer" value={formData.ratings!.department!.interviewer} onChange={handleChange} />
+                    <div className="mt-4">
+                         <h4 className="text-casino-text-muted font-semibold mb-2">References (Max 3)</h4>
+                        {(formData.references || []).map((r, i) => (
+                             <div key={i} className="p-2 border border-gray-700 rounded mb-2 space-y-2">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <input name="name" value={r.name} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Name" className="bg-casino-primary border-gray-600 rounded p-1"/>
+                                    <input name="relation" value={r.relation} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Relation" className="bg-casino-primary border-gray-600 rounded p-1"/>
+                                    <input name="company" value={r.company} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1"/>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <input name="contact" value={r.contact} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Contact No." className="bg-casino-primary border-gray-600 rounded p-1"/>
+                                    <input name="email" type="email" value={r.email} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Email" className="bg-casino-primary border-gray-600 rounded p-1"/>
+                                </div>
+                            </div>
+                        ))}
+                        <button type="button" onClick={() => addRepeatingField('references')} className="text-sm text-casino-gold">+ Add Reference</button>
                     </div>
                 </Card>
+                
+                {currentRole !== UserRole.Candidate && (
+                    <Card title="Interview & Ratings">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <FormField label="Position Offered" name="positionOffered" value={formData.positionOffered!} onChange={handleChange} />
+                            <FormField label="HR Interviewer Name" name="ratings.hr.interviewer" value={formData.ratings!.hr!.interviewer} onChange={handleChange} />
+                            <FormField label="HR Total Rating (1-5)" name="ratings.hr.score" type="number" min="1" max="5" value={formData.ratings!.hr!.score} onChange={handleChange} />
+                            <FormField label="Manager Total Rating (1-5)" name="ratings.manager.score" type="number" min="1" max="5" value={formData.ratings!.manager!.score} onChange={handleChange} />
+                            <FormField label="CM Total Rating (1-5)" name="ratings.cm.score" type="number" min="1" max="5" value={formData.ratings!.cm!.score} onChange={handleChange} />
+                            <FormField label="Department Interviewer Name" name="ratings.department.interviewer" value={formData.ratings!.department!.interviewer} onChange={handleChange} />
+                        </div>
+                    </Card>
+                )}
             </div>
             
             <div className="flex justify-end items-center mt-8 pt-6 border-t border-gray-700">
-                <button type="button" onClick={() => navigate('/applicants')} className="bg-casino-secondary hover:bg-gray-700 text-casino-text font-bold py-2 px-6 rounded-lg transition-colors mr-4">Cancel</button>
+                <button type="button" onClick={handleCancel} className="bg-casino-secondary hover:bg-gray-700 text-casino-text font-bold py-2 px-6 rounded-lg transition-colors mr-4">Cancel</button>
                 <button type="submit" className="bg-casino-gold hover:bg-yellow-600 text-casino-primary font-bold py-2 px-6 rounded-lg flex items-center transition-colors">
                     <Icon name="check-circle" className="w-5 h-5 mr-2" />
-                    Save Candidate
+                    {currentRole === UserRole.Candidate ? 'Submit Application' : 'Save Candidate'}
                 </button>
             </div>
         </form>

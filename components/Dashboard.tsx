@@ -33,7 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
                 { value: candidates.filter(c => c.status === ApplicationStatus.Rejected).length, label: 'Total Rejected', icon: 'x-circle' as const, color: 'bg-casino-danger' },
                 { value: candidates.filter(c => c.status === ApplicationStatus.PendingSurveillance).length, label: 'Pending Surveillance', icon: 'shield-check' as const, color: 'bg-casino-warning' },
             ],
-            [UserRole.CasinoManager]: [
+            [UserRole.HOD]: [
                  { value: candidates.filter(c => c.status === ApplicationStatus.New).length, label: 'New Applicants to Review', icon: 'user-plus' as const, color: 'bg-blue-500' },
                  { value: candidates.filter(c => c.status === ApplicationStatus.OfferAccepted).length, label: 'Awaiting Acknowledgement', icon: 'check-circle' as const, color: 'bg-casino-success' },
                  { value: candidates.filter(c => new Date(c.offer?.joiningDate || 0).toDateString() === new Date().toDateString()).length, label: 'Joining Today', icon: 'calendar' as const, color: 'bg-purple-500' },
@@ -68,6 +68,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
             {text}
         </Link>
     );
+    
+    const allQuickActions = [
+        { to: "/applicants/new", text: "Create Candidate", icon: "user-plus" as const, roles: [UserRole.HR] },
+        { to: "/applicants", text: "View All Applicants", icon: "users" as const, roles: [UserRole.Admin, UserRole.HOD, UserRole.HR, UserRole.Scheduler, UserRole.Surveillance] },
+        { to: "/reports", text: "Generate Reports", icon: "reports" as const, roles: [UserRole.Admin, UserRole.HR, UserRole.HOD] },
+        { to: "/settings", text: "System Settings", icon: "cog" as const, roles: [UserRole.Admin] },
+    ];
+
+    const availableQuickActions = allQuickActions.filter(action => action.roles.includes(currentRole));
 
     return (
         <div>
@@ -78,10 +87,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
 
             <Card title="Quick Actions">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                   <QuickAction to="/applicants/new" text="Create Candidate" icon="user-plus" />
-                   <QuickAction to="/applicants" text="View All Applicants" icon="users" />
-                   <QuickAction to="/reports" text="Generate Reports" icon="reports" />
-                   <QuickAction to="/settings" text="System Settings" icon="cog" />
+                   {availableQuickActions.map(action => (
+                       <QuickAction key={action.to} to={action.to} text={action.text} icon={action.icon} />
+                   ))}
                 </div>
             </Card>
         </div>
