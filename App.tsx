@@ -19,22 +19,20 @@ import { RoleSelection } from './components/RoleSelection';
 import { PreEmploymentTest } from './components/test/PreEmploymentTest';
 import { Card } from './components/common/Card';
 import { Icon } from './components/common/Icon';
+import { db } from './firebaseConfig';
+import { collection, onSnapshot, doc, setDoc, addDoc, writeBatch } from 'firebase/firestore';
 
 export const AppContext = createContext<{
   currentRole: UserRole;
   candidates: Candidate[];
-  updateCandidate: (updatedCandidate: Candidate) => void;
-  addCandidate: (newCandidateData: Partial<Candidate>) => Candidate;
-  setCandidates: (candidates: Candidate[]) => void;
+  updateCandidate: (updatedCandidate: Candidate) => Promise<void>;
+  addCandidate: (newCandidateData: Partial<Candidate>) => Promise<Candidate>;
 }>({
   currentRole: UserRole.Admin, // Default to a non-null role
   candidates: [],
-  updateCandidate: () => {},
-  addCandidate: () => ({} as Candidate),
-  setCandidates: () => {},
+  updateCandidate: async () => {},
+  addCandidate: async () => ({} as Candidate),
 });
-
-const CANDIDATES_STORAGE_KEY = 'smartHireCandidates';
 
 type AppState = 'role_selection' | 'admin_login' | 'candidate_portal' | 'candidate_test_confirmation' | 'candidate_test' | 'main_app';
 
@@ -52,36 +50,47 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('role_selection');
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
   const [candidateTakingTest, setCandidateTakingTest] = useState<Candidate | null>(null);
-  
-  const [candidates, setCandidates] = useState<Candidate[]>(() => {
-    try {
-      const storedCandidates = window.localStorage.getItem(CANDIDATES_STORAGE_KEY);
-      if (storedCandidates) {
-        return JSON.parse(storedCandidates);
-      }
-    } catch (error) {
-      console.error("Error reading candidates from localStorage", error);
-    }
-    return MOCK_CANDIDATES;
-  });
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(CANDIDATES_STORAGE_KEY, JSON.stringify(candidates));
-    } catch (error) {
-      console.error("Error saving candidates to localStorage", error);
-    }
-  }, [candidates]);
+    const candidatesCollection = collection(db, 'candidates');
+    const unsubscribe = onSnapshot(candidatesCollection, async (snapshot) => {
+        if (snapshot.empty) {
+            console.log("No candidates found, seeding database with mock data...");
+            const batch = writeBatch(db);
+            MOCK_CANDIDATES.forEach((candidate) => {
+                const docRef = doc(db, "candidates", candidate.id);
+                batch.set(docRef, candidate);
+            });
+            await batch.commit();
+        } else {
+            const candidatesData = snapshot.docs.map(doc => ({
+                ...doc.data() as Omit<Candidate, 'id'>,
+                id: doc.id,
+            }));
+            setCandidates(candidatesData);
+        }
+    }, (error) => {
+        console.error("Error fetching candidates from Firestore:", error);
+        alert("Could not connect to the database. Please check your Firebase configuration in 'firebaseConfig.ts' and your network connection.");
+    });
+
+    return () => unsubscribe();
+  }, []);
   
-  const updateCandidate = useCallback((updatedCandidate: Candidate) => {
-      setCandidates(prevCandidates => 
-        prevCandidates.map(c => c.id === updatedCandidate.id ? updatedCandidate : c)
-      );
+  const updateCandidate = useCallback(async (updatedCandidate: Candidate) => {
+      const candidateRef = doc(db, 'candidates', updatedCandidate.id);
+      try {
+        await setDoc(candidateRef, updatedCandidate, { merge: true });
+      } catch (error) {
+        console.error("Error updating candidate:", error);
+        alert(`Failed to update candidate: ${error}`);
+      }
   }, []);
 
-  const addCandidate = useCallback((newCandidateData: Partial<Candidate>) => {
-    const newCandidate: Candidate = {
-      id: `cand_${String(Date.now()).slice(-4)}`,
+  const addCandidate = useCallback(async (newCandidateData: Partial<Candidate>) => {
+    // Firestore generates the ID, so we don't include it in the initial object.
+    const candidateDataForDb: Omit<Candidate, 'id'> = {
       status: ApplicationStatus.New,
       statusHistory: [
         {
@@ -92,7 +101,6 @@ const App: React.FC = () => {
           action: 'Application Created',
         },
       ],
-      // Set defaults for required fields that might be missing
       fullName: 'Unnamed Candidate',
       vacancy: 'Unspecified',
       contact: { phone: '', email: '' },
@@ -105,8 +113,14 @@ const App: React.FC = () => {
       dob: new Date().toISOString().split('T')[0],
       ...newCandidateData,
     };
-    setCandidates(prev => [newCandidate, ...prev]);
-    return newCandidate;
+    
+    const docRef = await addDoc(collection(db, 'candidates'), candidateDataForDb);
+    
+    // Return the full candidate object with the new ID
+    return {
+        ...candidateDataForDb,
+        id: docRef.id,
+    };
   }, []);
 
   const handleLoginSuccess = (role: UserRole) => {
@@ -123,8 +137,7 @@ const App: React.FC = () => {
     currentRole: currentRole || UserRole.Admin,
     candidates, 
     updateCandidate, 
-    addCandidate, 
-    setCandidates 
+    addCandidate,
   };
   
   switch(appState) {

@@ -8,10 +8,45 @@ import { STATUS_COLORS, DEPARTMENTS, MARITAL_STATUSES } from '../constants';
 import { FormField } from './common/FormField';
 import { HiringStatusTracker } from './common/HiringStatusTracker';
 
+/**
+ * Creates a deep clone of an object, removing any circular references
+ * to make it safe for JSON serialization and state management.
+ * This is particularly useful for cleaning objects retrieved from Firestore.
+ */
+const sanitizeObject = <T extends {}>(obj: T | null | undefined): T | null => {
+    if (!obj) return null;
+    const cache = new Set();
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) {
+                // Circular reference found, discard it.
+                return undefined;
+            }
+            cache.add(value);
+        }
+        return value;
+    }));
+};
+
+/**
+ * Helper to safely stringify objects that might contain circular references,
+ * which can occur with complex state objects or data from libraries like Firebase.
+ */
+const safeJsonStringify = (obj: any): string => {
+    const cache = new Set();
+    return JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) return; // Don't stringify circular references
+            cache.add(value);
+        }
+        return value;
+    });
+};
+
 interface ApplicantProfileProps {
   candidates: Candidate[];
   currentRole: UserRole;
-  updateCandidate: (updatedCandidate: Candidate) => void;
+  updateCandidate: (updatedCandidate: Candidate) => Promise<void>;
 }
 
 const generateChangeLogs = (original: Candidate, updated: Candidate, user: string, role: UserRole, fieldsToTrack: string[]): AuditLog[] => {
@@ -35,7 +70,7 @@ const generateChangeLogs = (original: Candidate, updated: Candidate, user: strin
         const originalValue = getValueFromPath(original, path);
         const updatedValue = getValueFromPath(updated, path);
 
-        if (JSON.stringify(originalValue) === JSON.stringify(updatedValue)) {
+        if (safeJsonStringify(originalValue) === safeJsonStringify(updatedValue)) {
             return;
         }
 
@@ -87,8 +122,8 @@ const ActionPanel: React.FC<{title: string; children: React.ReactNode; icon: Rea
     </Card>
 );
 
-const SurveillancePanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => void}> = ({candidate, updateCandidate}) => {
-    const handleUpdate = (status: ApplicationStatus, action: string) => {
+const SurveillancePanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
+    const handleUpdate = async (status: ApplicationStatus, action: string) => {
         const updatedCandidate: Candidate = {
             ...candidate,
             status: status,
@@ -101,7 +136,7 @@ const SurveillancePanel: React.FC<{candidate: Candidate, updateCandidate: (c: Ca
                 { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: 'Surveillance', role: UserRole.Surveillance, action }
             ]
         };
-        updateCandidate(updatedCandidate);
+        await updateCandidate(updatedCandidate);
     };
 
     return (
@@ -116,8 +151,8 @@ const SurveillancePanel: React.FC<{candidate: Candidate, updateCandidate: (c: Ca
     );
 };
 
-const AdminPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => void}> = ({candidate, updateCandidate}) => {
-    const handleAdminAction = (newStatus: ApplicationStatus, actionText: string) => {
+const AdminPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
+    const handleAdminAction = async (newStatus: ApplicationStatus, actionText: string) => {
         const updatedCandidate: Candidate = {
             ...candidate,
             status: newStatus,
@@ -126,7 +161,7 @@ const AdminPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate
                 { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: 'Admin', role: UserRole.Admin, action: actionText }
             ]
         };
-        updateCandidate(updatedCandidate);
+        await updateCandidate(updatedCandidate);
     };
     
     return (
@@ -141,8 +176,8 @@ const AdminPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate
     );
 };
 
-const HODPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => void}> = ({candidate, updateCandidate}) => {
-    const handleDecision = (status: ApplicationStatus, action: string) => {
+const HODPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
+    const handleDecision = async (status: ApplicationStatus, action: string) => {
          const now = new Date();
          let newStatusHistory = [...candidate.statusHistory];
 
@@ -179,7 +214,7 @@ const HODPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) 
             rejection: status === ApplicationStatus.Rejected ? { actor: UserRole.HOD, reason: 'Rejected after interview', timestamp: now.toISOString() } : candidate.rejection,
             statusHistory: newStatusHistory
         };
-        updateCandidate(updatedCandidate);
+        await updateCandidate(updatedCandidate);
     };
 
     return (
@@ -194,11 +229,11 @@ const HODPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) 
     );
 };
 
-const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => void}> = ({candidate, updateCandidate}) => {
+const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
     const [interviewDate, setInterviewDate] = useState(candidate.interview?.date || '');
     const [interviewTime, setInterviewTime] = useState(candidate.interview?.time || '');
 
-    const handleScheduleInterview = () => {
+    const handleScheduleInterview = async () => {
         if (!interviewDate || !interviewTime) {
             alert("Please select a date and time for the interview.");
             return;
@@ -227,7 +262,7 @@ const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candi
                 }
             ]
         };
-        updateCandidate(updatedCandidate);
+        await updateCandidate(updatedCandidate);
     };
 
     return (
@@ -278,7 +313,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   const navigate = useNavigate();
   const candidate = candidates.find(c => c.id === id);
 
-  const [formData, setFormData] = useState<Candidate | null>(candidate || null);
+  const [formData, setFormData] = useState<Candidate | null>(sanitizeObject(candidate));
   const [commentText, setCommentText] = useState('');
   const [commenterName, setCommenterName] = useState('');
   const [commenterEmpId, setCommenterEmpId] = useState('');
@@ -288,9 +323,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   const canEditJobSection = currentRole === UserRole.HR || currentRole === UserRole.HOD;
 
   useEffect(() => {
-    if (candidate) {
-        setFormData(candidate);
-    }
+    setFormData(sanitizeObject(candidate));
   }, [candidate]);
 
   useEffect(() => {
@@ -435,11 +468,15 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
       if (!canEdit) return;
       const { name, value } = e.target;
       setFormData(prev => {
-          if (!prev) return null;
-          const newSectionData = prev[section] ? [...prev[section]!] : [];
-          if(newSectionData[index]) {
-            (newSectionData[index] as any)[name] = value;
-          }
+          if (!prev || !prev[section]) return prev;
+          
+          const newSectionData = (prev[section] as any[]).map((item, i) => {
+              if (i === index) {
+                  return { ...item, [name]: value };
+              }
+              return item;
+          });
+
           return { ...prev, [section]: newSectionData };
       });
   };
@@ -453,7 +490,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
       setFormData(prev => ({ ...prev!, [section]: [...(prev![section] || []), newItem] }));
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!candidate || !formData) return;
 
@@ -510,7 +547,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     }
     
     if (newLogs.length > 0) {
-        updateCandidate(finalCandidate);
+        await updateCandidate(finalCandidate);
         alert("Candidate details updated successfully!");
         navigate('/applicants');
     } else {
@@ -522,7 +559,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     window.print();
   };
   
-    const handleSaveComment = () => {
+    const handleSaveComment = async () => {
         if (!commentText.trim() || !commenterName.trim() || !commenterEmpId.trim()) {
             alert('Please fill in your name, employee ID, and comment before submitting.');
             return;
@@ -542,7 +579,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             comments: [...(candidate.comments || []), newComment],
         };
 
-        updateCandidate(updatedCandidate);
+        await updateCandidate(updatedCandidate);
         navigate('/applicants');
     };
 

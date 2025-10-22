@@ -111,13 +111,13 @@ export const CreateCandidateForm: React.FC<CreateCandidateFormProps> = ({ onSubm
         setFormData(prev => ({...prev, [section]: [...(prev[section] || []), newItem]}));
     };
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const finalData: Partial<Candidate> = {
             ...formData,
             photoUrl: photoPreview || undefined,
         };
-        const newCandidate = addCandidate(finalData);
+        const newCandidate = await addCandidate(finalData);
         if (onSubmissionSuccess) {
             onSubmissionSuccess(newCandidate);
         }

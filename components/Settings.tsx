@@ -39,7 +39,18 @@ export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
     const formatCsvCell = (data: any): string => {
         if (data === null || data === undefined) return '';
         if (typeof data === 'object') {
-            data = JSON.stringify(data);
+            const cache = new Set();
+            data = JSON.stringify(data, (key, value) => {
+                if (typeof value === 'object' && value !== null) {
+                    if (cache.has(value)) {
+                        // Circular reference found, discard key
+                        return;
+                    }
+                    // Store value in our collection
+                    cache.add(value);
+                }
+                return value;
+            });
         }
         let cell = String(data);
         cell = cell.replace(/"/g, '""');

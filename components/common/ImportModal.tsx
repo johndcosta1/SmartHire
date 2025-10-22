@@ -1,8 +1,9 @@
-import React, { useContext, useRef } from 'react';
-import { AppContext } from '../../App';
+import React, { useRef } from 'react';
 import { Candidate } from '../../types';
 import { Card } from './Card';
 import { Icon } from './Icon';
+import { db } from '../../firebaseConfig';
+import { writeBatch, doc } from 'firebase/firestore';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -10,7 +11,6 @@ interface ImportModalProps {
 }
 
 export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => {
-  const { setCandidates } = useContext(AppContext);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportClick = () => {
@@ -22,7 +22,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         const text = e.target?.result;
         if (typeof text !== 'string') return;
         
@@ -79,11 +79,20 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
                 }
                 newCandidates.push(candidateObj as Candidate);
             }
-            setCandidates(newCandidates);
-            alert('Data imported successfully!');
+            
+            const batch = writeBatch(db);
+            newCandidates.forEach((candidate) => {
+                if (candidate.id) {
+                    const docRef = doc(db, "candidates", candidate.id);
+                    batch.set(docRef, candidate);
+                }
+            });
+            await batch.commit();
+
+            alert(`${newCandidates.length} records imported successfully! The page will now reflect the new data.`);
             onClose();
         } catch (error) {
-            console.error("Error parsing CSV file:", error);
+            console.error("Error importing data to Firestore:", error);
             alert("Failed to import data. Please check the file format and console for errors.");
         } finally {
             if(fileInputRef.current) {
@@ -101,7 +110,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
       <Card className="w-full max-w-lg" title="Sync Candidate Data">
         <p className="text-casino-text-muted mb-6">
           To ensure you are working with the most up-to-date information, please import the latest candidate data file.
-          You can get this file from your HR or Admin.
+          This will overwrite any existing data in the system.
         </p>
         <div className="flex flex-col space-y-4">
           <button 
@@ -109,7 +118,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
             className="w-full bg-casino-accent hover:bg-yellow-700 text-casino-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
           >
             <Icon name="upload" className="w-5 h-5 mr-2" />
-            Import Latest File (.csv)
+            Import & Overwrite Data (.csv)
           </button>
           <input type="file" ref={fileInputRef} onChange={handleFileImport} accept=".csv" className="hidden" />
           
@@ -117,7 +126,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
             onClick={onClose}
             className="w-full bg-casino-secondary hover:bg-gray-700 text-casino-text font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
           >
-            Continue with Existing Data
+            Cancel
           </button>
         </div>
       </Card>
