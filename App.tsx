@@ -72,7 +72,7 @@ const App: React.FC = () => {
         }
     }, (error) => {
         console.error("Error fetching candidates from Firestore:", error);
-        alert("Could not connect to the database. Please check your Firebase configuration in 'firebaseConfig.ts' and your network connection.");
+        alert("DATABASE CONNECTION FAILED. This is likely because the Firebase project configuration is missing or incorrect. Please open 'firebaseConfig.ts', follow the instructions to add your project credentials, and ensure your Firestore security rules allow read access.");
     });
 
     return () => unsubscribe();

@@ -493,6 +493,13 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!candidate || !formData) return;
+    
+    // Create a sanitized, deep-cloned version of the original candidate data to prevent circular reference issues.
+    const originalCandidateClean = sanitizeObject(candidate);
+    if (!originalCandidateClean) {
+        alert("An error occurred while processing candidate data.");
+        return;
+    }
 
     let newLogs: AuditLog[] = [];
     let finalCandidate: Candidate;
@@ -510,7 +517,8 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             'expectedSalary', 'accommodationRequired', 'transportRequired',
             'offer.salary', 'offer.joiningDate', 'offer.accommodationDetails'
         ];
-        newLogs = generateChangeLogs(candidate, formData, hrInterviewerName, UserRole.HR, hrFieldsToTrack);
+        // Use the clean version for comparison to avoid circular reference errors.
+        newLogs = generateChangeLogs(originalCandidateClean, formData, hrInterviewerName, UserRole.HR, hrFieldsToTrack);
 
         finalCandidate = {
             ...formData,
@@ -524,10 +532,12 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             'ratings.cm.score', 'ratings.department.interviewer'
         ];
         
-        newLogs = generateChangeLogs(candidate, formData, 'HOD', UserRole.HOD, hodFieldsToTrack);
+        // Use the clean version for comparison.
+        newLogs = generateChangeLogs(originalCandidateClean, formData, 'HOD', UserRole.HOD, hodFieldsToTrack);
 
+        // Construct the final object based on the clean original, overlaying only the fields HOD can change.
         finalCandidate = {
-            ...candidate,
+            ...originalCandidateClean,
             vacancy: formData.vacancy,
             positionOffered: formData.positionOffered,
             department: formData.department,
@@ -535,12 +545,12 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             accommodationRequired: formData.accommodationRequired,
             transportRequired: formData.transportRequired,
             ratings: {
-                ...candidate.ratings,
+                ...originalCandidateClean.ratings,
                 manager: formData.ratings?.manager,
                 cm: formData.ratings?.cm,
                 department: formData.ratings?.department,
             },
-            statusHistory: [...candidate.statusHistory, ...newLogs],
+            statusHistory: [...originalCandidateClean.statusHistory, ...newLogs],
         };
     } else {
         return; // No update logic for other roles

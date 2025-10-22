@@ -4,10 +4,25 @@ import { Card } from './common/Card';
 import { Icon } from './common/Icon';
 import { USER_ROLES, JOB_ROLES, DEPARTMENTS } from '../constants';
 import { AppContext } from '../App';
+import { ImportModal } from './common/ImportModal';
 
 interface SettingsProps {
   candidates: Candidate[];
 }
+
+const sanitizeForExport = (obj: any) => {
+    const cache = new Set();
+    // This is safe because JSON.parse will create a new plain object
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) {
+                return; // Remove circular references
+            }
+            cache.add(value);
+        }
+        return value;
+    }));
+};
 
 const InfoCard: React.FC<{ title: string; value: string | number; icon: React.ComponentProps<typeof Icon>['name']; }> = ({ title, value, icon }) => (
     <Card className="flex items-center">
@@ -34,23 +49,17 @@ const ListCard: React.FC<{ title: string; items: readonly string[] }> = ({ title
 
 export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
   const { currentRole } = useContext(AppContext);
+  const [isImportModalOpen, setIsImportModalOpen] = React.useState(false);
 
   const handleExportData = () => {
+    // Sanitize the entire candidates array to remove Firestore-specific complexities and circular references.
+    const sanitizedCandidates = sanitizeForExport(candidates);
+
     const formatCsvCell = (data: any): string => {
         if (data === null || data === undefined) return '';
+        // After sanitization, all objects are plain and can be safely stringified.
         if (typeof data === 'object') {
-            const cache = new Set();
-            data = JSON.stringify(data, (key, value) => {
-                if (typeof value === 'object' && value !== null) {
-                    if (cache.has(value)) {
-                        // Circular reference found, discard key
-                        return;
-                    }
-                    // Store value in our collection
-                    cache.add(value);
-                }
-                return value;
-            });
+            data = JSON.stringify(data);
         }
         let cell = String(data);
         cell = cell.replace(/"/g, '""');
@@ -75,18 +84,8 @@ export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
     
     const csvRows = [headers.join(',')];
 
-    for (const candidate of candidates) {
-        const values = [
-            candidate.id, candidate.photoUrl, candidate.fullName, candidate.dob,
-            candidate.age, candidate.contact, candidate.emergencyContact, candidate.address,
-            candidate.medicalConditions, candidate.religion, candidate.maritalStatus,
-            candidate.vacancy, candidate.positionOffered, candidate.department,
-            candidate.expectedSalary, candidate.accommodationRequired, candidate.transportRequired,
-            candidate.totalWorkExperience, candidate.languagesKnown, candidate.ratings,
-            candidate.references, candidate.qualifications, candidate.workExperience,
-            candidate.status, candidate.statusHistory, candidate.rejection, candidate.interview,
-            candidate.surveillanceReport, candidate.offer, candidate.employeeId, candidate.createdAt
-        ].map(formatCsvCell);
+    for (const candidate of sanitizedCandidates) {
+        const values = headers.map(header => formatCsvCell((candidate as any)[header] ?? ''));
         csvRows.push(values.join(','));
     }
 
@@ -105,47 +104,54 @@ export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-casino-gold flex items-center">
-          <Icon name="cog" className="w-8 h-8 mr-3" />
-          System Settings
-        </h1>
-      </div>
-      
-      <div className="space-y-8">
-        <section>
-          <h2 className="text-xl font-semibold text-casino-text-muted mb-4">System Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <InfoCard title="Total Candidates" value={candidates.length} icon="users" />
-              <InfoCard title="Defined User Roles" value={USER_ROLES.length} icon="briefcase" />
-              <InfoCard title="Active Departments" value={DEPARTMENTS.length} icon="document-text" />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold text-casino-text-muted mb-4">Configurable Lists</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ListCard title="Job Roles" items={JOB_ROLES} />
-              <ListCard title="Departments" items={DEPARTMENTS} />
-          </div>
-        </section>
+    <>
+      <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-casino-gold flex items-center">
+            <Icon name="cog" className="w-8 h-8 mr-3" />
+            System Settings
+          </h1>
+        </div>
         
-        { [UserRole.Admin, UserRole.HR].includes(currentRole) && (
-            <section>
-              <h2 className="text-xl font-semibold text-casino-text-muted mb-4">Data Management</h2>
-              <Card>
-                  <p className="text-casino-text-muted mb-4">Export all candidate data to a CSV file as a backup or for sharing.</p>
-                  <div className="flex items-center space-x-4">
-                      <button onClick={handleExportData} className="bg-casino-secondary hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-colors">
-                          <Icon name="download" className="w-5 h-5 mr-2" />
-                          Export Data (CSV)
-                      </button>
-                  </div>
-              </Card>
-            </section>
-        )}
+        <div className="space-y-8">
+          <section>
+            <h2 className="text-xl font-semibold text-casino-text-muted mb-4">System Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <InfoCard title="Total Candidates" value={candidates.length} icon="users" />
+                <InfoCard title="Defined User Roles" value={USER_ROLES.length} icon="briefcase" />
+                <InfoCard title="Active Departments" value={DEPARTMENTS.length} icon="document-text" />
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-casino-text-muted mb-4">Configurable Lists</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ListCard title="Job Roles" items={JOB_ROLES} />
+                <ListCard title="Departments" items={DEPARTMENTS} />
+            </div>
+          </section>
+          
+          { [UserRole.Admin, UserRole.HR].includes(currentRole) && (
+              <section>
+                <h2 className="text-xl font-semibold text-casino-text-muted mb-4">Data Management</h2>
+                <Card>
+                    <p className="text-casino-text-muted mb-4">Import or export all candidate data. Importing will overwrite existing data with the content from the CSV file.</p>
+                    <div className="flex items-center space-x-4">
+                        <button onClick={() => setIsImportModalOpen(true)} className="bg-casino-accent hover:bg-yellow-700 text-casino-primary font-bold py-2 px-4 rounded-lg flex items-center transition-colors">
+                            <Icon name="upload" className="w-5 h-5 mr-2" />
+                            Import Data (CSV)
+                        </button>
+                        <button onClick={handleExportData} className="bg-casino-secondary hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-colors">
+                            <Icon name="download" className="w-5 h-5 mr-2" />
+                            Export Data (CSV)
+                        </button>
+                    </div>
+                </Card>
+              </section>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
