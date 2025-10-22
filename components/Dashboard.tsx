@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { UserRole, ApplicationStatus, Candidate, AuditLog } from '../types';
@@ -49,8 +48,8 @@ const MetricCard: React.FC<{ value: number; label: string; icon: React.Component
 
 export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates }) => {
 
-    const getMetrics = () => {
-        const metrics = {
+    const metrics = useMemo(() => {
+        const allMetrics = {
             [UserRole.Admin]: [
                 { value: candidates.length, label: 'Total Applicants', icon: 'users' as const, color: 'bg-blue-500', to: '/applicants' },
                 { value: candidates.filter(c => c.status === ApplicationStatus.Joined).length, label: 'Total Joined', icon: 'check-circle' as const, color: 'bg-casino-success', to: '/applicants', state: { status: ApplicationStatus.Joined } },
@@ -81,8 +80,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
                 { value: candidates.filter(c => c.status === ApplicationStatus.Rejected).length, label: 'Rejected Candidates', icon: 'x-circle' as const, color: 'bg-casino-danger', to: '/applicants', state: { status: ApplicationStatus.Rejected } },
             ]
         };
-        return metrics[currentRole] || [];
-    };
+        return allMetrics[currentRole] || [];
+    }, [currentRole, candidates]);
 
     const userActivity = useMemo(() => {
         const activity: Array<AuditLog & { candidateName: string; candidateId: string; }> = [];
@@ -122,7 +121,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
         <div>
             <h1 className="text-3xl font-bold text-casino-gold mb-6">Dashboard</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {getMetrics().map(metric => <MetricCard key={metric.label} {...metric} />)}
+                {metrics.map(metric => <MetricCard key={metric.label} {...metric} />)}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

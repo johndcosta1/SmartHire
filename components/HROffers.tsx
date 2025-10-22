@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Candidate, ApplicationStatus } from '../types';
@@ -11,8 +10,10 @@ interface HROffersProps {
 
 type OfferTab = 'Ready' | 'Accepted' | 'Scheduled';
 
-const CandidateOfferCard: React.FC<{ candidate: Candidate }> = ({ candidate }) => {
+const CandidateOfferCard: React.FC<{ candidate: Candidate; activeTab: OfferTab }> = ({ candidate, activeTab }) => {
     const navigate = useNavigate();
+    const isEditable = activeTab === 'Accepted' || activeTab === 'Scheduled';
+
     return (
         <div className="bg-casino-secondary p-4 rounded-lg flex items-center justify-between shadow-md">
             <div className="flex items-center">
@@ -22,10 +23,24 @@ const CandidateOfferCard: React.FC<{ candidate: Candidate }> = ({ candidate }) =
                     <p className="text-sm text-casino-text-muted">{candidate.vacancy}</p>
                 </div>
             </div>
-            <button onClick={() => navigate(`/applicants/${candidate.id}`)} className="bg-casino-gold hover:bg-yellow-600 text-casino-primary font-bold py-2 px-4 rounded-lg flex items-center transition-colors">
-                <Icon name="document-text" className="w-4 h-4 mr-2" />
-                View
-            </button>
+            <div className="flex items-center space-x-2">
+                 {isEditable && (
+                    <button 
+                        onClick={() => navigate(`/applicants/${candidate.id}`)} 
+                        className="bg-casino-accent hover:bg-yellow-700 text-casino-primary font-bold py-2 px-4 rounded-lg flex items-center transition-colors text-sm"
+                    >
+                        <Icon name="cog" className="w-4 h-4 mr-2" />
+                        Edit Offer Details
+                    </button>
+                )}
+                <button 
+                    onClick={() => navigate(`/applicants/${candidate.id}`)} 
+                    className="bg-casino-gold hover:bg-yellow-600 text-casino-primary font-bold py-2 px-4 rounded-lg flex items-center transition-colors text-sm"
+                >
+                    <Icon name="document-text" className="w-4 h-4 mr-2" />
+                    View
+                </button>
+            </div>
         </div>
     );
 };
@@ -72,7 +87,7 @@ export const HROffers: React.FC<HROffersProps> = ({ candidates }) => {
                 <div className="space-y-4">
                     {filteredCandidates[activeTab].length > 0 ? (
                         filteredCandidates[activeTab].map(candidate => (
-                            <CandidateOfferCard key={candidate.id} candidate={candidate} />
+                            <CandidateOfferCard key={candidate.id} candidate={candidate} activeTab={activeTab} />
                         ))
                     ) : (
                         <div className="text-center py-12">

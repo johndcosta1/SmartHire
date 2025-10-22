@@ -14,6 +14,68 @@ interface ApplicantProfileProps {
   updateCandidate: (updatedCandidate: Candidate) => void;
 }
 
+const generateChangeLogs = (original: Candidate, updated: Candidate, user: string, role: UserRole, fieldsToTrack: string[]): AuditLog[] => {
+    const logs: AuditLog[] = [];
+    const now = Date.now();
+
+    const getValueFromPath = (obj: any, path: string): any => {
+        return path.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
+    };
+
+    const formatKey = (keyPath: string): string => {
+        return keyPath
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/\./g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    fieldsToTrack.forEach(path => {
+        const originalValue = getValueFromPath(original, path);
+        const updatedValue = getValueFromPath(updated, path);
+
+        if (JSON.stringify(originalValue) === JSON.stringify(updatedValue)) {
+            return;
+        }
+
+        if (typeof originalValue === 'boolean' && typeof updatedValue === 'boolean') {
+             logs.push({
+                id: `log_${now}_${logs.length}`,
+                timestamp: new Date().toISOString(),
+                user,
+                role,
+                action: `${formatKey(path)} set to "${updatedValue ? 'Yes' : 'No'}".`
+            });
+            return;
+        }
+
+        if (Array.isArray(originalValue) || Array.isArray(updatedValue)) {
+            logs.push({
+                id: `log_${now}_${logs.length}`,
+                timestamp: new Date().toISOString(),
+                user,
+                role,
+                action: `${formatKey(path)} was updated.`
+            });
+            return;
+        }
+
+        const from = originalValue !== null && originalValue !== undefined && originalValue !== '' ? `from "${originalValue}"` : 'from empty';
+        const to = updatedValue !== null && updatedValue !== undefined && updatedValue !== '' ? `to "${updatedValue}"` : 'to empty';
+        
+        logs.push({
+            id: `log_${now}_${logs.length}`,
+            timestamp: new Date().toISOString(),
+            user,
+            role,
+            action: `${formatKey(path)} changed ${from} ${to}.`
+        });
+    });
+
+    return logs;
+};
+
 // Action Panels
 const ActionPanel: React.FC<{title: string; children: React.ReactNode; icon: React.ComponentProps<typeof Icon>['name']}> = ({title, children, icon}) => (
     <Card className="border-l-4 border-casino-gold">
@@ -301,7 +363,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     const checked = (e.target as HTMLInputElement).checked;
     let val: string | number | boolean = type === 'checkbox' ? checked : value;
 
-    if (type === 'number' || name.endsWith('score')) {
+    if (type === 'number' || name.endsWith('score') || name.endsWith('salary')) {
       val = value === '' ? '' : Number(value);
     }
 
@@ -395,47 +457,64 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     e.preventDefault();
     if (!candidate || !formData) return;
 
+    let newLogs: AuditLog[] = [];
+    let finalCandidate: Candidate;
+
     if (currentRole === UserRole.HR) {
-      const hrInterviewerName = formData.ratings?.hr?.interviewer || 'HR Staff';
-      const newAuditLog: AuditLog = {
-        id: `log_${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        user: hrInterviewerName,
-        role: UserRole.HR,
-        action: 'HR Interview & Evaluation Updated',
-      };
+        const hrInterviewerName = formData.ratings?.hr?.interviewer || 'HR Staff';
+        const hrFieldsToTrack = [
+            'fullName', 'dob', 'age', 'address', 'contact.phone', 'contact.email',
+            'emergencyContact.name', 'emergencyContact.phone', 'medicalConditions',
+            'religion', 'maritalStatus', 'totalWorkExperience', 'languagesKnown',
+            'qualifications', 'workExperience', 'references',
+            'ratings.hr.interviewer', 'ratings.hr.personality', 'ratings.hr.attitude',
+            'ratings.hr.presentable', 'ratings.hr.communication', 'ratings.hr.confidence',
+            'ratings.hr.evaluation', 'vacancy', 'positionOffered', 'department',
+            'expectedSalary', 'accommodationRequired', 'transportRequired',
+            'offer.salary', 'offer.joiningDate', 'offer.accommodationDetails'
+        ];
+        newLogs = generateChangeLogs(candidate, formData, hrInterviewerName, UserRole.HR, hrFieldsToTrack);
 
-      const finalCandidate: Candidate = {
-        ...formData,
-        statusHistory: [...formData.statusHistory, newAuditLog],
-      };
+        finalCandidate = {
+            ...formData,
+            statusHistory: [...formData.statusHistory, ...newLogs],
+        };
 
-      updateCandidate(finalCandidate);
-      alert("Candidate details updated successfully!");
-      navigate('/applicants');
-      return;
+    } else if (currentRole === UserRole.HOD) {
+        const hodFieldsToTrack = [
+            'vacancy', 'positionOffered', 'department', 'expectedSalary',
+            'accommodationRequired', 'transportRequired', 'ratings.manager.score',
+            'ratings.cm.score', 'ratings.department.interviewer'
+        ];
+        
+        newLogs = generateChangeLogs(candidate, formData, 'HOD', UserRole.HOD, hodFieldsToTrack);
+
+        finalCandidate = {
+            ...candidate,
+            vacancy: formData.vacancy,
+            positionOffered: formData.positionOffered,
+            department: formData.department,
+            expectedSalary: formData.expectedSalary,
+            accommodationRequired: formData.accommodationRequired,
+            transportRequired: formData.transportRequired,
+            ratings: {
+                ...candidate.ratings,
+                manager: formData.ratings?.manager,
+                cm: formData.ratings?.cm,
+                department: formData.ratings?.department,
+            },
+            statusHistory: [...candidate.statusHistory, ...newLogs],
+        };
+    } else {
+        return; // No update logic for other roles
     }
-
-    if (currentRole === UserRole.HOD) {
-      const finalCandidate: Candidate = {
-        ...candidate,
-        vacancy: formData.vacancy,
-        positionOffered: formData.positionOffered,
-        department: formData.department,
-        expectedSalary: formData.expectedSalary,
-        accommodationRequired: formData.accommodationRequired,
-        transportRequired: formData.transportRequired,
-        ratings: {
-          hr: candidate.ratings?.hr,
-          manager: formData.ratings?.manager,
-          cm: formData.ratings?.cm,
-          department: formData.ratings?.department,
-        },
-      };
-      updateCandidate(finalCandidate);
-      alert("Candidate details updated successfully!");
-      navigate('/applicants');
-      return;
+    
+    if (newLogs.length > 0) {
+        updateCandidate(finalCandidate);
+        alert("Candidate details updated successfully!");
+        navigate('/applicants');
+    } else {
+        alert("No changes were made.");
     }
   };
   
@@ -717,6 +796,46 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                       </div>
                   </div>
               </Card>
+
+              {[
+                ApplicationStatus.SurveillanceCleared,
+                ApplicationStatus.OfferAccepted,
+                ApplicationStatus.JoiningScheduled,
+                ApplicationStatus.Joined,
+              ].includes(formData.status) && (
+                <Card title="Offer Details">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      label="Offered Salary"
+                      name="offer.salary"
+                      type="number"
+                      value={formData.offer?.salary || ''}
+                      onChange={handleChange}
+                      disabled={!canEdit}
+                      placeholder="Enter offered salary"
+                    />
+                    <FormField
+                      label="Joining Date"
+                      name="offer.joiningDate"
+                      type="date"
+                      value={formData.offer?.joiningDate || ''}
+                      onChange={handleChange}
+                      disabled={!canEdit}
+                    />
+                    <FormField
+                      label="Accommodation Details"
+                      name="offer.accommodationDetails"
+                      type="textarea"
+                      rows={3}
+                      value={formData.offer?.accommodationDetails || ''}
+                      onChange={handleChange}
+                      disabled={!canEdit}
+                      className="md:col-span-2"
+                      placeholder="Details about accommodation, if any"
+                    />
+                  </div>
+                </Card>
+              )}
               
               {canSaveChanges && (
                   <div className="flex justify-end items-center py-4 no-print">
