@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AppContext } from '../../App';
 import { Candidate, UserRole } from '../../types';
@@ -55,12 +54,12 @@ export const PreEmploymentTest: React.FC<PreEmploymentTestProps> = ({ candidate,
 
   const handleAnswerSelect = (questionId: string, answerKey: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answerKey }));
-  };
-
-  const handleNext = () => {
-    if (currentQuestionIndex < shuffledQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
+    // Automatically move to the next question after a brief delay for UX
+    setTimeout(() => {
+        if (currentQuestionIndex < shuffledQuestions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        }
+    }, 300);
   };
 
   const handlePrev = () => {
@@ -178,16 +177,12 @@ export const PreEmploymentTest: React.FC<PreEmploymentTestProps> = ({ candidate,
         </div>
 
         <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-700">
-          <button onClick={handlePrev} disabled={currentQuestionIndex === 0} className="bg-casino-secondary hover:bg-gray-700 text-casino-text font-bold py-2 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+          <button onClick={handlePrev} disabled={currentQuestionIndex === 0} className="bg-casino-gold hover:bg-yellow-600 text-casino-primary font-bold py-2 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
             Previous
           </button>
-          {currentQuestionIndex === shuffledQuestions.length - 1 ? (
+          {currentQuestionIndex === shuffledQuestions.length - 1 && (
             <button onClick={handleSubmit} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg flex items-center transition-colors">
               Submit Test
-            </button>
-          ) : (
-            <button onClick={handleNext} className="bg-casino-gold hover:bg-yellow-600 text-casino-primary font-bold py-2 px-6 rounded-lg">
-              Next
             </button>
           )}
         </div>

@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Candidate, ApplicationStatus } from '../types';
 import { Card } from './common/Card';
 import { Icon } from './common/Icon';
@@ -30,7 +31,8 @@ const CandidateOfferCard: React.FC<{ candidate: Candidate }> = ({ candidate }) =
 };
 
 export const HROffers: React.FC<HROffersProps> = ({ candidates }) => {
-    const [activeTab, setActiveTab] = useState<OfferTab>('Ready');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState<OfferTab>(location.state?.tab || 'Ready');
 
     const filteredCandidates = {
         Ready: candidates.filter(c => c.status === ApplicationStatus.SurveillanceCleared),

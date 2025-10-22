@@ -43,7 +43,8 @@ export const MOCK_CANDIDATES: Candidate[] = [
     ],
     references: [
         { name: 'Suresh Menon', relation: 'Former Manager', company: 'Goa Grand Casino', contact: '+91 9876543212', email: 'suresh.m@ggc.com' }
-    ]
+    ],
+    comments: [],
   },
   {
     id: 'cand_002',
@@ -73,6 +74,7 @@ export const MOCK_CANDIDATES: Candidate[] = [
       { id: 'log_002a', timestamp: '2023-10-25T11:30:00Z', user: 'HR Aparna', role: UserRole.HR, action: 'Application Created' },
       { id: 'log_002b', timestamp: '2023-10-25T14:00:00Z', user: 'Scheduler Jane', role: UserRole.Scheduler, action: 'Interview Scheduled for 2023-10-28 14:00' },
     ],
+    comments: [],
   },
   {
     id: 'cand_003',
@@ -104,6 +106,7 @@ export const MOCK_CANDIDATES: Candidate[] = [
       { id: 'log_003c', timestamp: '2023-10-26T12:00:00Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Interview Completed' },
       { id: 'log_003d', timestamp: '2023-10-26T12:00:01Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Selected by HOD' },
     ],
+    comments: [],
   },
   {
     id: 'cand_004',
@@ -128,7 +131,8 @@ export const MOCK_CANDIDATES: Candidate[] = [
         { id: 'log_004c', timestamp: '2023-10-25T11:00:00Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Interview Completed' },
         { id: 'log_004d', timestamp: '2023-10-25T11:00:01Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Selected by HOD' },
         { id: 'log_004e', timestamp: '2023-10-26T10:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Surveillance Cleared'},
-    ]
+    ],
+    comments: [],
   },
     {
     id: 'cand_005',
@@ -157,7 +161,8 @@ export const MOCK_CANDIDATES: Candidate[] = [
         { id: 'log_005f', timestamp: '2023-09-20T10:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Offer Accepted'},
         { id: 'log_005g', timestamp: '2023-09-22T11:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Joining Scheduled'},
         { id: 'log_005h', timestamp: '2023-10-01T09:00:00Z', user: 'Admin', role: UserRole.Admin, action: 'Marked as Joined'},
-    ]
+    ],
+    comments: [],
   },
    {
     id: 'cand_006',
@@ -187,7 +192,8 @@ export const MOCK_CANDIDATES: Candidate[] = [
         { id: 'log_006c', timestamp: '2023-10-25T16:00:00Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Interview Completed' },
         { id: 'log_006d', timestamp: '2023-10-25T16:00:01Z', user: 'HOD Mike', role: UserRole.HOD, action: 'Selected by HOD' },
         { id: 'log_006e', timestamp: '2023-10-27T16:00:00Z', user: 'Surveillance Ops', role: UserRole.Surveillance, action: 'Application Rejected'},
-    ]
+    ],
+    comments: [],
   },
 ];
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Candidate, UserRole, ApplicationStatus, AuditLog } from '../types';
+import { Candidate, UserRole, ApplicationStatus, AuditLog, Comment } from '../types';
 import { Card } from './common/Card';
 import { Badge } from './common/Badge';
 import { Icon } from './common/Icon';
@@ -217,6 +217,9 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   const candidate = candidates.find(c => c.id === id);
 
   const [formData, setFormData] = useState<Candidate | null>(candidate || null);
+  const [commentText, setCommentText] = useState('');
+  const [commenterName, setCommenterName] = useState('');
+  const [commenterEmpId, setCommenterEmpId] = useState('');
   const photoInputRef = useRef<HTMLInputElement>(null);
   
   const canEdit = currentRole === UserRole.HR;
@@ -440,6 +443,30 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     window.print();
   };
   
+    const handleSaveComment = () => {
+        if (!commentText.trim() || !commenterName.trim() || !commenterEmpId.trim()) {
+            alert('Please fill in your name, employee ID, and comment before submitting.');
+            return;
+        }
+
+        const newComment: Comment = {
+            id: `comment_${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: commenterName,
+            empId: commenterEmpId,
+            comment: commentText,
+            role: currentRole,
+        };
+
+        const updatedCandidate: Candidate = {
+            ...candidate,
+            comments: [...(candidate.comments || []), newComment],
+        };
+
+        updateCandidate(updatedCandidate);
+        navigate('/applicants');
+    };
+
   const renderActionPanel = () => {
       if (currentRole === UserRole.Scheduler && candidate.status === ApplicationStatus.New) {
         return <SchedulerPanel candidate={candidate} updateCandidate={updateCandidate} />;
@@ -505,7 +532,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             </div>
         </div>
 
-        <HiringStatusTracker status={formData.status} />
+        <HiringStatusTracker candidate={formData} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -704,6 +731,73 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             <div className="no-print">
               {renderActionPanel()}
             </div>
+            
+            {currentRole !== UserRole.Admin && (
+              <Card title="Add a Comment">
+                  <div className="space-y-4">
+                      <FormField
+                          label="Your Name"
+                          name="commenterName"
+                          value={commenterName}
+                          onChange={(e) => setCommenterName(e.target.value)}
+                          placeholder="Enter your full name"
+                          required
+                      />
+                      <FormField
+                          label="Employee ID"
+                          name="commenterEmpId"
+                          value={commenterEmpId}
+                          onChange={(e) => setCommenterEmpId(e.target.value)}
+                          placeholder="Enter your employee ID"
+                          required
+                      />
+                      <FormField
+                          label="Comment"
+                          name="commentText"
+                          type="textarea"
+                          rows={4}
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Add your notes or comments here..."
+                          required
+                      />
+                      <button
+                          type="button"
+                          onClick={handleSaveComment}
+                          className="w-full bg-casino-gold hover:bg-yellow-600 text-casino-primary font-bold py-2 px-6 rounded-lg flex items-center justify-center transition-colors"
+                      >
+                          <Icon name="check-circle" className="w-5 h-5 mr-2" />
+                          Save & Submit
+                      </button>
+                  </div>
+              </Card>
+            )}
+
+            <Card title="Comments Log">
+                {(candidate.comments && candidate.comments.length > 0) ? (
+                    <ul className="space-y-4">
+                    {candidate.comments.slice().reverse().map(comment => (
+                        <li key={comment.id} className="flex items-start pb-3 border-b border-gray-700 last:border-b-0">
+                        <div className="bg-casino-accent text-casino-primary rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0" title={`${comment.user} (${comment.role})`}>
+                            {comment.user.charAt(0)}
+                        </div>
+                        <div>
+                            <p className="text-sm text-casino-text">{comment.comment}</p>
+                            <p className="text-xs text-casino-text-muted mt-1">
+                            <strong>{comment.user}</strong> (ID: {comment.empId})
+                            </p>
+                            <p className="text-xs text-casino-text-muted">
+                            {new Date(comment.timestamp).toLocaleString()}
+                            </p>
+                        </div>
+                        </li>
+                    ))}
+                    </ul>
+                ) : (
+                    <p className="text-casino-text-muted text-center py-4">No comments yet.</p>
+                )}
+            </Card>
+
             <Card title="Audit Trail">
               <ul className="space-y-4">
                 {formData.statusHistory.slice().reverse().map(log => (

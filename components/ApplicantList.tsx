@@ -1,7 +1,6 @@
 
-
 import React, { useState, useMemo, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Candidate, ApplicationStatus, UserRole } from '../types';
 import { Card } from './common/Card';
 import { Badge } from './common/Badge';
@@ -15,9 +14,10 @@ interface ApplicantListProps {
 
 export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { currentRole } = useContext(AppContext);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('All');
+    const [statusFilter, setStatusFilter] = useState<string>(location.state?.status || 'All');
     const [departmentFilter, setDepartmentFilter] = useState<string>('All');
 
     const filteredCandidates = useMemo(() => {

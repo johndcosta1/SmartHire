@@ -48,6 +48,15 @@ export interface Rejection {
   evidence?: string;
 }
 
+export interface Comment {
+  id: string;
+  timestamp: string;
+  user: string; // Name of the commenter
+  empId: string;
+  comment: string;
+  role: UserRole;
+}
+
 export interface Candidate {
   id: string;
   photoUrl?: string;
@@ -112,6 +121,7 @@ export interface Candidate {
   // System fields
   status: ApplicationStatus;
   statusHistory: AuditLog[];
+  comments?: Comment[];
   rejection?: Rejection;
   interview?: Interview;
   surveillanceReport?: {
