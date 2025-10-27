@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Candidate, ApplicationStatus, UserRole } from '../types';
+import { Candidate, ApplicationStatus } from '../types';
 import { Card } from './common/Card';
 import { Icon } from './common/Icon';
 
@@ -8,27 +8,57 @@ interface SurveillanceQueueProps {
   candidates: Candidate[];
 }
 
+type SurveillanceTab = 'Pending' | 'Cleared' | 'Flagged';
+
 export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates }) => {
   const navigate = useNavigate();
-  const queue = candidates.filter(c => c.status === ApplicationStatus.PendingSurveillance);
+  const [activeTab, setActiveTab] = useState<SurveillanceTab>('Pending');
+
+  const filteredCandidates = {
+    Pending: candidates.filter(c => c.status === ApplicationStatus.PendingSurveillance),
+    Cleared: candidates.filter(c => c.surveillanceReport?.status === 'Clear'),
+    Flagged: candidates.filter(c => c.surveillanceReport?.status === 'Flagged'),
+  };
+  
+  const TabButton: React.FC<{ tab: SurveillanceTab; label: string; icon: React.ComponentProps<typeof Icon>['name'] }> = ({ tab, label, icon }) => (
+    <button
+      onClick={() => setActiveTab(tab)}
+      className={`flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${activeTab === tab ? 'border-casino-gold text-casino-gold' : 'border-transparent text-casino-text-muted hover:text-casino-text'}`}
+    >
+      <Icon name={icon} className="w-5 h-5" />
+      <span>{label}</span>
+      <span className="bg-casino-secondary text-casino-text text-xs font-bold rounded-full px-2 py-0.5">{filteredCandidates[tab].length}</span>
+    </button>
+  );
+
+  const currentList = filteredCandidates[activeTab];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-casino-gold flex items-center">
-          <Icon name="shield-check" className="w-8 h-8 mr-3" />
-          Surveillance Queue
-        </h1>
-        <div className="text-lg font-semibold bg-casino-warning text-white rounded-full px-4 py-1">
-          {queue.length} Pending
+        <div>
+          <h1 className="text-3xl font-bold text-casino-gold flex items-center">
+            <Icon name="shield-check" className="w-8 h-8 mr-3" />
+            Surveillance Checks
+          </h1>
+          <p className="text-casino-text-muted mt-1">Showing <span className="font-semibold text-casino-text">{activeTab}</span> Candidates</p>
         </div>
       </div>
+      
+      <div className="border-b border-gray-700 mb-6">
+          <div className="flex space-x-4">
+              <TabButton tab="Pending" label="Pending" icon="clock" />
+              <TabButton tab="Cleared" label="Cleared" icon="check-circle" />
+              <TabButton tab="Flagged" label="Flagged" icon="exclamation-circle" />
+          </div>
+      </div>
+
       <Card>
-        {queue.length === 0 ? (
+        {currentList.length === 0 ? (
           <div className="text-center py-12">
-            <Icon name="check-circle" className="w-16 h-16 text-casino-success mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-casino-text">The queue is clear!</h2>
-            <p className="text-casino-text-muted mt-2">There are no candidates currently pending surveillance checks.</p>
+            <Icon name="search" className="w-16 h-16 text-casino-text-muted mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-casino-text">No Candidates Found</h2>
+            <p className="text-casino-text-muted mt-2">There are no candidates in the "{activeTab}" category.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -43,8 +73,8 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
                 </tr>
               </thead>
               <tbody className="bg-casino-primary divide-y divide-gray-700">
-                {queue.map(candidate => (
-                  <tr key={candidate.id}>
+                {currentList.map(candidate => (
+                  <tr key={candidate.id} className="hover:bg-casino-secondary transition-colors" onClick={() => navigate(`/applicants/${candidate.id}`)}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -60,7 +90,7 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{new Date(candidate.statusHistory.find(h => h.action.startsWith('Selected by'))?.timestamp || candidate.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{candidate.interview?.interviewer || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button onClick={() => navigate(`/applicants/${candidate.id}`)} className="text-casino-gold hover:text-yellow-400 font-semibold">View Profile</button>
+                      <button className="text-casino-gold hover:text-yellow-400 font-semibold cursor-pointer">View Profile</button>
                     </td>
                   </tr>
                 ))}

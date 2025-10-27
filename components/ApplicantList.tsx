@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Candidate, ApplicationStatus, UserRole } from '../types';
@@ -21,12 +22,14 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
     const [departmentFilter, setDepartmentFilter] = useState<string>('All');
 
     const filteredCandidates = useMemo(() => {
-        return candidates.filter(c => {
-            const matchesSearch = c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toLowerCase().includes(searchTerm.toLowerCase()) || c.vacancy.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
-            const matchesDepartment = departmentFilter === 'All' || c.department === departmentFilter;
-            return matchesSearch && matchesStatus && matchesDepartment;
-        });
+        return candidates
+            .filter(c => {
+                const matchesSearch = c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toLowerCase().includes(searchTerm.toLowerCase()) || c.vacancy.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
+                const matchesDepartment = departmentFilter === 'All' || c.department === departmentFilter;
+                return matchesSearch && matchesStatus && matchesDepartment;
+            })
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }, [candidates, searchTerm, statusFilter, departmentFilter]);
 
     const handleExport = () => {

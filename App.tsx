@@ -19,8 +19,6 @@ import { RoleSelection } from './components/RoleSelection';
 import { PreEmploymentTest } from './components/test/PreEmploymentTest';
 import { Card } from './components/common/Card';
 import { Icon } from './components/common/Icon';
-import { db } from './firebaseConfig';
-import { collection, onSnapshot, doc, setDoc, addDoc, writeBatch } from 'firebase/firestore';
 
 export const AppContext = createContext<{
   currentRole: UserRole;
@@ -50,47 +48,34 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('role_selection');
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
   const [candidateTakingTest, setCandidateTakingTest] = useState<Candidate | null>(null);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>(() => {
+    try {
+      const storedCandidates = localStorage.getItem('smartHireCandidates');
+      return storedCandidates ? JSON.parse(storedCandidates) : MOCK_CANDIDATES;
+    } catch (error) {
+      console.error("Error reading from localStorage", error);
+      return MOCK_CANDIDATES;
+    }
+  });
 
   useEffect(() => {
-    const candidatesCollection = collection(db, 'candidates');
-    const unsubscribe = onSnapshot(candidatesCollection, async (snapshot) => {
-        if (snapshot.empty) {
-            console.log("No candidates found, seeding database with mock data...");
-            const batch = writeBatch(db);
-            MOCK_CANDIDATES.forEach((candidate) => {
-                const docRef = doc(db, "candidates", candidate.id);
-                batch.set(docRef, candidate);
-            });
-            await batch.commit();
-        } else {
-            const candidatesData = snapshot.docs.map(doc => ({
-                ...doc.data() as Omit<Candidate, 'id'>,
-                id: doc.id,
-            }));
-            setCandidates(candidatesData);
-        }
-    }, (error) => {
-        console.error("Error fetching candidates from Firestore:", error);
-        alert("DATABASE CONNECTION FAILED. This is likely because the Firebase project configuration is missing or incorrect. Please open 'firebaseConfig.ts', follow the instructions to add your project credentials, and ensure your Firestore security rules allow read access.");
-    });
+    try {
+        localStorage.setItem('smartHireCandidates', JSON.stringify(candidates));
+    } catch (error) {
+        console.error("Could not save candidates to localStorage", error);
+    }
+  }, [candidates]);
 
-    return () => unsubscribe();
-  }, []);
-  
+
   const updateCandidate = useCallback(async (updatedCandidate: Candidate) => {
-      const candidateRef = doc(db, 'candidates', updatedCandidate.id);
-      try {
-        await setDoc(candidateRef, updatedCandidate, { merge: true });
-      } catch (error) {
-        console.error("Error updating candidate:", error);
-        alert(`Failed to update candidate: ${error}`);
-      }
+    setCandidates(prevCandidates =>
+      prevCandidates.map(c => (c.id === updatedCandidate.id ? updatedCandidate : c))
+    );
   }, []);
 
   const addCandidate = useCallback(async (newCandidateData: Partial<Candidate>) => {
-    // Firestore generates the ID, so we don't include it in the initial object.
-    const candidateDataForDb: Omit<Candidate, 'id'> = {
+    const newCandidate: Candidate = {
+      id: `cand_${Date.now()}`,
       status: ApplicationStatus.New,
       statusHistory: [
         {
@@ -102,25 +87,20 @@ const App: React.FC = () => {
         },
       ],
       fullName: 'Unnamed Candidate',
-      vacancy: 'Unspecified',
+      dob: new Date().toISOString().split('T')[0],
       contact: { phone: '', email: '' },
-      emergencyContact: { name: '', phone: ''},
+      emergencyContact: { name: '', phone: '' },
       address: '',
+      vacancy: 'Unspecified',
       expectedSalary: 0,
       accommodationRequired: false,
       transportRequired: false,
       createdAt: new Date().toISOString(),
-      dob: new Date().toISOString().split('T')[0],
       ...newCandidateData,
-    };
+    } as Candidate; // Assert as Candidate after applying defaults and partial data
     
-    const docRef = await addDoc(collection(db, 'candidates'), candidateDataForDb);
-    
-    // Return the full candidate object with the new ID
-    return {
-        ...candidateDataForDb,
-        id: docRef.id,
-    };
+    setCandidates(prev => [...prev, newCandidate]);
+    return newCandidate;
   }, []);
 
   const handleLoginSuccess = (role: UserRole) => {

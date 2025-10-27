@@ -72,11 +72,14 @@ export const PreEmploymentTest: React.FC<PreEmploymentTestProps> = ({ candidate,
     if (isFinished) return;
 
     let score = 0;
-    shuffledQuestions.forEach(q => {
+    // Iterate over the original TEST_QUESTIONS to ensure correct answer checking
+    TEST_QUESTIONS.forEach(q => {
       const selectedAnswerKey = answers[q.id];
       if (selectedAnswerKey) {
-        const selectedOption = q.options.find(opt => opt.key === selectedAnswerKey);
-        if (selectedOption && selectedOption.isCorrect) {
+        // Find the correct option from the original question data
+        const correctOption = q.options.find(opt => opt.isCorrect);
+        // Check if the user's selected answer key matches the correct answer key
+        if (correctOption && correctOption.key === selectedAnswerKey) {
           score++;
         }
       }

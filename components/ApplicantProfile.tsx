@@ -122,149 +122,51 @@ const ActionPanel: React.FC<{title: string; children: React.ReactNode; icon: Rea
     </Card>
 );
 
-const SurveillancePanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
-    const handleUpdate = async (status: ApplicationStatus, action: string) => {
-        const updatedCandidate: Candidate = {
-            ...candidate,
-            status: status,
-            surveillanceReport: {
-                ...candidate.surveillanceReport,
-                status: status === ApplicationStatus.SurveillanceCleared ? "Clear" : "Flagged",
-            },
-            statusHistory: [
-                ...candidate.statusHistory,
-                { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: 'Surveillance', role: UserRole.Surveillance, action }
-            ]
-        };
-        await updateCandidate(updatedCandidate);
-    };
-
+const SurveillancePanel: React.FC<{ onUpdate: (status: ApplicationStatus, action: string) => void }> = ({ onUpdate }) => {
     return (
         <ActionPanel title="Surveillance Check" icon="shield-check">
             <p className="text-casino-text-muted mb-4">Update background check status for the candidate.</p>
             <div className="flex flex-col space-y-3 mt-4">
-                <button type="button" onClick={() => handleUpdate(ApplicationStatus.SurveillanceCleared, 'Background Check Cleared')} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="check-circle" className="w-5 h-5 mr-2"/>Cleared</button>
-                <button type="button" onClick={() => handleUpdate(ApplicationStatus.SurveillanceFlagged, 'Background Check Flagged')} className="bg-casino-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="x-circle" className="w-5 h-5 mr-2"/>Flagged</button>
-                <button type="button" className="bg-casino-warning hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="clock" className="w-5 h-5 mr-2"/>Pending</button>
+                <button type="button" onClick={() => onUpdate(ApplicationStatus.SurveillanceCleared, 'Background Check Cleared')} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="check-circle" className="w-5 h-5 mr-2"/>Cleared</button>
+                <button type="button" onClick={() => onUpdate(ApplicationStatus.SurveillanceFlagged, 'Background Check Flagged')} className="bg-casino-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="x-circle" className="w-5 h-5 mr-2"/>Flagged</button>
             </div>
         </ActionPanel>
     );
 };
 
-const AdminPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
-    const handleAdminAction = async (newStatus: ApplicationStatus, actionText: string) => {
-        const updatedCandidate: Candidate = {
-            ...candidate,
-            status: newStatus,
-            statusHistory: [
-                ...candidate.statusHistory,
-                { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: 'Admin', role: UserRole.Admin, action: actionText }
-            ]
-        };
-        await updateCandidate(updatedCandidate);
-    };
-    
+const AdminPanel: React.FC<{ candidateStatus: ApplicationStatus; onUpdate: (status: ApplicationStatus, action: string) => void }> = ({ candidateStatus, onUpdate }) => {
     return (
      <ActionPanel title="Admin Onboarding" icon="briefcase">
         <p className="text-casino-text-muted mb-4">Manage the candidate's final onboarding process.</p>
         <div className="flex flex-col space-y-3">
-             <button disabled={candidate.status !== ApplicationStatus.SurveillanceCleared} onClick={() => handleAdminAction(ApplicationStatus.OfferAccepted, "Offer Accepted")} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Offer Accepted</button>
-             <button disabled={candidate.status !== ApplicationStatus.OfferAccepted} onClick={() => handleAdminAction(ApplicationStatus.JoiningScheduled, "Joining Scheduled")} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Schedule Joining</button>
-             <button disabled={candidate.status !== ApplicationStatus.JoiningScheduled} onClick={() => handleAdminAction(ApplicationStatus.Joined, "Marked as Joined")} className="bg-casino-success hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Mark as Joined</button>
+             <button disabled={candidateStatus !== ApplicationStatus.SurveillanceCleared} onClick={() => onUpdate(ApplicationStatus.OfferAccepted, "Offer Accepted")} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Offer Accepted</button>
+             <button disabled={candidateStatus !== ApplicationStatus.OfferAccepted} onClick={() => onUpdate(ApplicationStatus.JoiningScheduled, "Joining Scheduled")} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Schedule Joining</button>
+             <button disabled={candidateStatus !== ApplicationStatus.JoiningScheduled} onClick={() => onUpdate(ApplicationStatus.Joined, "Marked as Joined")} className="bg-casino-success hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Mark as Joined</button>
         </div>
     </ActionPanel>
     );
 };
 
-const HODPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
-    const handleDecision = async (status: ApplicationStatus, action: string) => {
-         const now = new Date();
-         let newStatusHistory = [...candidate.statusHistory];
-
-         // For final decisions (Selected/Rejected), add two log entries.
-         if (status === ApplicationStatus.PendingSurveillance || status === ApplicationStatus.Rejected) {
-            newStatusHistory.push({
-                id: `log_${now.getTime()}_a`,
-                timestamp: now.toISOString(),
-                user: 'HOD',
-                role: UserRole.HOD,
-                action: 'Interview Completed'
-            });
-            newStatusHistory.push({
-                id: `log_${now.getTime()}_b`,
-                timestamp: new Date(now.getTime() + 1).toISOString(), // Ensure different timestamp for key
-                user: 'HOD',
-                role: UserRole.HOD,
-                action: action // This will be 'Selected by HOD' or 'Rejected after interview'
-            });
-         } else {
-             // For 'Pending' status, add a single entry.
-            newStatusHistory.push({
-                id: `log_${now.getTime()}`,
-                timestamp: now.toISOString(),
-                user: 'HOD',
-                role: UserRole.HOD,
-                action: action
-            });
-         }
-        
-         const updatedCandidate: Candidate = {
-            ...candidate,
-            status,
-            rejection: status === ApplicationStatus.Rejected ? { actor: UserRole.HOD, reason: 'Rejected after interview', timestamp: now.toISOString() } : candidate.rejection,
-            statusHistory: newStatusHistory
-        };
-        await updateCandidate(updatedCandidate);
-    };
-
+const HODPanel: React.FC<{ onUpdate: (status: ApplicationStatus, action: string) => void }> = ({ onUpdate }) => {
     return (
         <ActionPanel title="Interview Feedback" icon="user-plus">
             <p className="text-casino-text-muted mb-4">Provide the outcome of the interview.</p>
             <div className="flex flex-col space-y-3 mt-4">
-                <button type="button" onClick={() => handleDecision(ApplicationStatus.PendingSurveillance, 'Selected by HOD')} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="check-circle" className="w-5 h-5 mr-2"/>Selected</button>
-                <button type="button" onClick={() => handleDecision(ApplicationStatus.InterviewCompleted, 'Interview outcome is pending')} className="bg-casino-warning hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="clock" className="w-5 h-5 mr-2"/>Pending</button>
-                <button type="button" onClick={() => handleDecision(ApplicationStatus.Rejected, 'Rejected after interview')} className="bg-casino-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="x-circle" className="w-5 h-5 mr-2"/>Rejected</button>
+                <button type="button" onClick={() => onUpdate(ApplicationStatus.PendingSurveillance, 'Selected by HOD')} className="bg-casino-success hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="check-circle" className="w-5 h-5 mr-2"/>Selected</button>
+                <button type="button" onClick={() => onUpdate(ApplicationStatus.InterviewCompleted, 'Interview outcome is pending')} className="bg-casino-warning hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="clock" className="w-5 h-5 mr-2"/>Pending</button>
+                <button type="button" onClick={() => onUpdate(ApplicationStatus.Rejected, 'Rejected after interview')} className="bg-casino-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"><Icon name="x-circle" className="w-5 h-5 mr-2"/>Rejected</button>
             </div>
         </ActionPanel>
     );
 };
 
-const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candidate) => Promise<void>}> = ({candidate, updateCandidate}) => {
-    const [interviewDate, setInterviewDate] = useState(candidate.interview?.date || '');
-    const [interviewTime, setInterviewTime] = useState(candidate.interview?.time || '');
-
-    const handleScheduleInterview = async () => {
-        if (!interviewDate || !interviewTime) {
-            alert("Please select a date and time for the interview.");
-            return;
-        }
-        const updatedCandidate: Candidate = {
-            ...candidate,
-            status: ApplicationStatus.InterviewScheduled,
-            interview: {
-                id: `int_${candidate.id.slice(-3)}`,
-                interviewer: 'HOD',
-                date: interviewDate,
-                time: interviewTime,
-                type: 'In-Person',
-                feedback: '',
-                score: 0,
-                recommendation: 'Pass',
-            },
-            statusHistory: [
-                ...candidate.statusHistory,
-                {
-                    id: `log_${Date.now()}`,
-                    timestamp: new Date().toISOString(),
-                    user: 'Scheduler',
-                    role: UserRole.Scheduler,
-                    action: `Interview Scheduled for ${interviewDate} at ${interviewTime}`,
-                }
-            ]
-        };
-        await updateCandidate(updatedCandidate);
-    };
-
+const SchedulerPanel: React.FC<{ 
+    interviewDate: string;
+    interviewTime: string;
+    onDateChange: (date: string) => void;
+    onTimeChange: (time: string) => void;
+    onSchedule: () => void;
+}> = ({ interviewDate, interviewTime, onDateChange, onTimeChange, onSchedule }) => {
     return (
         <ActionPanel title="Schedule Interview" icon="calendar">
             <p className="text-casino-text-muted mb-4">Schedule interview date and time for the candidate.</p>
@@ -272,14 +174,14 @@ const SchedulerPanel: React.FC<{candidate: Candidate, updateCandidate: (c: Candi
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-casino-text-muted mb-1">Interview Date:</label>
-                        <input type="date" value={interviewDate} onChange={e => setInterviewDate(e.target.value)} className="w-full bg-casino-primary border border-gray-600 rounded-md py-2 px-3" />
+                        <input type="date" value={interviewDate} onChange={e => onDateChange(e.target.value)} className="w-full bg-casino-primary border border-gray-600 rounded-md py-2 px-3" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-casino-text-muted mb-1">Interview Time:</label>
-                        <input type="time" value={interviewTime} onChange={e => setInterviewTime(e.target.value)} className="w-full bg-casino-primary border border-gray-600 rounded-md py-2 px-3" />
+                        <input type="time" value={interviewTime} onChange={e => onTimeChange(e.target.value)} className="w-full bg-casino-primary border border-gray-600 rounded-md py-2 px-3" />
                     </div>
                 </div>
-                <button type="button" onClick={handleScheduleInterview} className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg w-full">Schedule Interview</button>
+                <button type="button" onClick={onSchedule} className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg w-full">Schedule Interview</button>
             </div>
         </ActionPanel>
     );
@@ -311,9 +213,9 @@ const StarRating: React.FC<{
 export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, currentRole, updateCandidate }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const candidate = candidates.find(c => c.id === id);
+  const originalCandidate = candidates.find(c => c.id === id);
 
-  const [formData, setFormData] = useState<Candidate | null>(sanitizeObject(candidate));
+  const [formData, setFormData] = useState<Candidate | null>(sanitizeObject(originalCandidate));
   const [commentText, setCommentText] = useState('');
   const [commenterName, setCommenterName] = useState('');
   const [commenterEmpId, setCommenterEmpId] = useState('');
@@ -323,11 +225,11 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   const canEditJobSection = currentRole === UserRole.HR || currentRole === UserRole.HOD;
 
   useEffect(() => {
-    setFormData(sanitizeObject(candidate));
-  }, [candidate]);
+    setFormData(sanitizeObject(originalCandidate));
+  }, [originalCandidate]);
 
   useEffect(() => {
-    if (currentRole !== UserRole.HR) return;
+    if (currentRole !== UserRole.HR || !formData) return;
 
     const hrRatings = formData?.ratings?.hr;
     if (hrRatings) {
@@ -340,18 +242,20 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
         ].filter((s): s is number => typeof s === 'number' && s >= 1 && s <= 5);
 
         const newScore = scores.length > 0
-            ? scores.reduce((a, b) => a + b, 0) / scores.length
+            ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1))
             : 0;
 
         if (hrRatings.score !== newScore) {
             setFormData(prev => {
-                if (!prev || !prev.ratings || !prev.ratings.hr) return prev;
-                return {
+                if (!prev) return prev;
+                 const existingRatings = prev.ratings || {};
+                 const existingHrRatings = existingRatings.hr || {};
+                 return {
                     ...prev,
                     ratings: {
-                        ...prev.ratings,
+                        ...existingRatings,
                         hr: {
-                            ...prev.ratings.hr,
+                            ...existingHrRatings,
                             score: newScore,
                         },
                     },
@@ -366,11 +270,11 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     formData?.ratings?.hr?.communication,
     formData?.ratings?.hr?.confidence,
     currentRole,
-    formData?.ratings?.hr,
+    formData,
   ]);
 
 
-  if (!candidate || !formData) {
+  if (!originalCandidate || !formData) {
     return <div className="text-center p-10">
         <h2 className="text-2xl text-casino-danger">Applicant not found.</h2>
         <Link to="/applicants" className="text-casino-gold hover:underline mt-4 inline-block">Back to list</Link>
@@ -397,7 +301,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     let val: string | number | boolean = type === 'checkbox' ? checked : value;
 
     if (type === 'number' || name.endsWith('score') || name.endsWith('salary')) {
-      val = value === '' ? '' : Number(value);
+      val = value === '' ? 0 : Number(value);
     }
 
     const parts = name.split('.');
@@ -409,57 +313,39 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             return { ...prev, [name]: val };
         } 
         
-        if (parts.length === 2) {
-            const [parent, child] = parts;
-            return {
-                ...prev,
-                [parent]: { 
-                    ...((prev as any)[parent] || {}), 
-                    [child]: val 
-                },
-            };
-        } 
-        
-        if (parts.length === 3) {
-            const [parent, child, grandchild] = parts;
-            const prevParent = (prev as any)[parent] || {};
-            const prevChild = prevParent[child] || {};
-            
-            return {
-                ...prev,
-                [parent]: {
-                    ...prevParent,
-                    [child]: { 
-                        ...prevChild, 
-                        [grandchild]: val 
-                    },
-                },
-            };
+        const newState = { ...prev };
+        let currentLevel: any = newState;
+
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (currentLevel[parts[i]] === undefined || currentLevel[parts[i]] === null) {
+                currentLevel[parts[i]] = {};
+            }
+            currentLevel = currentLevel[parts[i]];
         }
-        return prev;
+        currentLevel[parts[parts.length - 1]] = val;
+
+        return newState;
     });
   };
 
   const handleRatingChange = (name: string, rating: number) => {
     if (!canEdit) return;
     const parts = name.split('.');
-    setFormData(prev => {
-        if (!prev || parts.length !== 3) return prev;
+     setFormData(prev => {
+        if (!prev) return null;
         
-        const [parent, child, grandchild] = parts;
-        const prevParent = (prev as any)[parent] || {};
-        const prevChild = prevParent[child] || {};
-        
-        return {
-            ...prev,
-            [parent]: {
-                ...prevParent,
-                [child]: {
-                    ...prevChild,
-                    [grandchild]: rating,
-                },
-            },
-        };
+        const newState = { ...prev };
+        let currentLevel: any = newState;
+
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (currentLevel[parts[i]] === undefined || currentLevel[parts[i]] === null) {
+                currentLevel[parts[i]] = {};
+            }
+            currentLevel = currentLevel[parts[i]];
+        }
+        currentLevel[parts[parts.length - 1]] = rating;
+
+        return newState;
     });
 };
 
@@ -489,24 +375,83 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
       if (section === 'references') newItem = { name: '', relation: '', company: '', contact: '', email: '' };
       setFormData(prev => ({ ...prev!, [section]: [...(prev![section] || []), newItem] }));
   };
+  
+  const handleStatusUpdate = async (newStatus: ApplicationStatus, actionText: string, actionRole: UserRole) => {
+    if (!formData) return;
+    
+    let updatedCandidate = { ...formData };
+    
+    if (actionRole === UserRole.HOD && (newStatus === ApplicationStatus.PendingSurveillance || newStatus === ApplicationStatus.Rejected)) {
+        const now = new Date();
+        const baseTimestamp = now.toISOString();
+        const secondTimestamp = new Date(now.getTime() + 1).toISOString();
+
+        updatedCandidate.statusHistory = [
+            ...updatedCandidate.statusHistory,
+            { id: `log_${now.getTime()}_a`, timestamp: baseTimestamp, user: 'HOD', role: UserRole.HOD, action: 'Interview Completed' },
+            { id: `log_${now.getTime()}_b`, timestamp: secondTimestamp, user: 'HOD', role: UserRole.HOD, action: actionText }
+        ];
+    } else {
+        updatedCandidate.statusHistory = [
+            ...updatedCandidate.statusHistory,
+            { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: actionRole, role: actionRole, action: actionText }
+        ];
+    }
+
+    updatedCandidate.status = newStatus;
+
+    if (newStatus === ApplicationStatus.Rejected && actionRole === UserRole.HOD) {
+        updatedCandidate.rejection = { actor: UserRole.HOD, reason: 'Rejected after interview', timestamp: new Date().toISOString() };
+    }
+    
+    if (actionRole === UserRole.Surveillance) {
+        updatedCandidate.surveillanceReport = {
+            ...updatedCandidate.surveillanceReport,
+            status: newStatus === ApplicationStatus.SurveillanceCleared ? "Clear" : newStatus === ApplicationStatus.SurveillanceFlagged ? "Flagged" : undefined,
+        };
+    }
+
+    setFormData(updatedCandidate);
+    await updateCandidate(updatedCandidate);
+  };
+  
+  const handleScheduleInterview = async () => {
+    if (!formData || !formData.interview?.date || !formData.interview?.time) {
+        alert("Please select a date and time for the interview.");
+        return;
+    }
+    
+    const actionText = `Interview Scheduled for ${formData.interview.date} at ${formData.interview.time}`;
+
+    const updatedCandidate: Candidate = {
+        ...formData,
+        status: ApplicationStatus.InterviewScheduled,
+        statusHistory: [
+            ...formData.statusHistory,
+            { id: `log_${Date.now()}`, timestamp: new Date().toISOString(), user: 'Scheduler', role: UserRole.Scheduler, action: actionText }
+        ]
+    };
+
+    setFormData(updatedCandidate);
+    await updateCandidate(updatedCandidate);
+};
+
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!candidate || !formData) return;
+    if (!originalCandidate || !formData) return;
     
-    // Create a sanitized, deep-cloned version of the original candidate data to prevent circular reference issues.
-    const originalCandidateClean = sanitizeObject(candidate);
+    const originalCandidateClean = sanitizeObject(originalCandidate);
     if (!originalCandidateClean) {
-        alert("An error occurred while processing candidate data.");
+        console.error("An error occurred while processing candidate data.");
         return;
     }
 
     let newLogs: AuditLog[] = [];
-    let finalCandidate: Candidate;
+    const fieldsToTrack: string[] = [];
 
     if (currentRole === UserRole.HR) {
-        const hrInterviewerName = formData.ratings?.hr?.interviewer || 'HR Staff';
-        const hrFieldsToTrack = [
+        fieldsToTrack.push(
             'fullName', 'dob', 'age', 'address', 'contact.phone', 'contact.email',
             'emergencyContact.name', 'emergencyContact.phone', 'medicalConditions',
             'religion', 'maritalStatus', 'totalWorkExperience', 'languagesKnown',
@@ -516,50 +461,24 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             'ratings.hr.evaluation', 'vacancy', 'positionOffered', 'department',
             'expectedSalary', 'accommodationRequired', 'transportRequired',
             'offer.salary', 'offer.joiningDate', 'offer.accommodationDetails'
-        ];
-        // Use the clean version for comparison to avoid circular reference errors.
-        newLogs = generateChangeLogs(originalCandidateClean, formData, hrInterviewerName, UserRole.HR, hrFieldsToTrack);
-
-        finalCandidate = {
-            ...formData,
-            statusHistory: [...formData.statusHistory, ...newLogs],
-        };
-
+        );
+         newLogs = generateChangeLogs(originalCandidateClean, formData, formData.ratings?.hr?.interviewer || 'HR Staff', UserRole.HR, fieldsToTrack);
     } else if (currentRole === UserRole.HOD) {
-        const hodFieldsToTrack = [
+        fieldsToTrack.push(
             'vacancy', 'positionOffered', 'department', 'expectedSalary',
             'accommodationRequired', 'transportRequired', 'ratings.manager.score',
             'ratings.cm.score', 'ratings.department.interviewer'
-        ];
-        
-        // Use the clean version for comparison.
-        newLogs = generateChangeLogs(originalCandidateClean, formData, 'HOD', UserRole.HOD, hodFieldsToTrack);
-
-        // Construct the final object based on the clean original, overlaying only the fields HOD can change.
-        finalCandidate = {
-            ...originalCandidateClean,
-            vacancy: formData.vacancy,
-            positionOffered: formData.positionOffered,
-            department: formData.department,
-            expectedSalary: formData.expectedSalary,
-            accommodationRequired: formData.accommodationRequired,
-            transportRequired: formData.transportRequired,
-            ratings: {
-                ...originalCandidateClean.ratings,
-                manager: formData.ratings?.manager,
-                cm: formData.ratings?.cm,
-                department: formData.ratings?.department,
-            },
-            statusHistory: [...originalCandidateClean.statusHistory, ...newLogs],
-        };
-    } else {
-        return; // No update logic for other roles
+        );
+        newLogs = generateChangeLogs(originalCandidateClean, formData, 'HOD', UserRole.HOD, fieldsToTrack);
     }
     
-    if (newLogs.length > 0) {
+    if (newLogs.length > 0 || safeJsonStringify(originalCandidateClean) !== safeJsonStringify(formData)) {
+        const finalCandidate = {
+            ...formData,
+            statusHistory: [...(formData.statusHistory || []), ...newLogs],
+        };
         await updateCandidate(finalCandidate);
-        alert("Candidate details updated successfully!");
-        navigate('/applicants');
+        alert("Changes saved successfully!");
     } else {
         alert("No changes were made.");
     }
@@ -570,7 +489,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   };
   
     const handleSaveComment = async () => {
-        if (!commentText.trim() || !commenterName.trim() || !commenterEmpId.trim()) {
+        if (!commentText.trim() || !commenterName.trim() || !commenterEmpId.trim() || !formData) {
             alert('Please fill in your name, employee ID, and comment before submitting.');
             return;
         }
@@ -585,26 +504,36 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
         };
 
         const updatedCandidate: Candidate = {
-            ...candidate,
-            comments: [...(candidate.comments || []), newComment],
+            ...formData,
+            comments: [...(formData.comments || []), newComment],
         };
 
+        setFormData(updatedCandidate);
         await updateCandidate(updatedCandidate);
-        navigate('/applicants');
+        setCommentText('');
+        setCommenterName('');
+        setCommenterEmpId('');
+        alert('Comment saved successfully!');
     };
 
   const renderActionPanel = () => {
-      if (currentRole === UserRole.Scheduler && candidate.status === ApplicationStatus.New) {
-        return <SchedulerPanel candidate={candidate} updateCandidate={updateCandidate} />;
+      if (currentRole === UserRole.Scheduler && formData.status === ApplicationStatus.New) {
+        return <SchedulerPanel 
+            interviewDate={formData.interview?.date || ''}
+            interviewTime={formData.interview?.time || ''}
+            onDateChange={(date) => handleChange({ target: { name: 'interview.date', value: date } } as any)}
+            onTimeChange={(time) => handleChange({ target: { name: 'interview.time', value: time } } as any)}
+            onSchedule={handleScheduleInterview}
+        />;
       }
-      if (currentRole === UserRole.HOD && candidate.status === ApplicationStatus.InterviewScheduled) {
-        return <HODPanel candidate={candidate} updateCandidate={updateCandidate} />;
+      if (currentRole === UserRole.HOD && [ApplicationStatus.InterviewScheduled, ApplicationStatus.InterviewCompleted].includes(formData.status)) {
+        return <HODPanel onUpdate={(status, action) => handleStatusUpdate(status, action, UserRole.HOD)} />;
       }
-      if (currentRole === UserRole.Surveillance && candidate.status === ApplicationStatus.PendingSurveillance) {
-        return <SurveillancePanel candidate={candidate} updateCandidate={updateCandidate} />;
+      if (currentRole === UserRole.Surveillance && formData.status === ApplicationStatus.PendingSurveillance) {
+        return <SurveillancePanel onUpdate={(status, action) => handleStatusUpdate(status, action, UserRole.Surveillance)} />;
       }
-      if (currentRole === UserRole.Admin && [ApplicationStatus.SurveillanceCleared, ApplicationStatus.OfferAccepted, ApplicationStatus.JoiningScheduled].includes(candidate.status)) {
-        return <AdminPanel candidate={candidate} updateCandidate={updateCandidate} />;
+      if (currentRole === UserRole.Admin && [ApplicationStatus.SurveillanceCleared, ApplicationStatus.OfferAccepted, ApplicationStatus.JoiningScheduled].includes(formData.status)) {
+        return <AdminPanel candidateStatus={formData.status} onUpdate={(status, action) => handleStatusUpdate(status, action, UserRole.Admin)} />;
       }
       return null;
   }
@@ -658,7 +587,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             </div>
         </div>
 
-        <HiringStatusTracker candidate={formData} />
+        <HiringStatusTracker candidate={formData} currentRole={currentRole} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -806,20 +735,20 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                     </div>
                 </Card>
 
-              {candidate.preEmploymentTest && (
+              {formData.preEmploymentTest && (
                 <Card title="Pre-Employment Test">
                     <div className="flex justify-around items-center text-center">
                         <div>
                             <p className="text-casino-text-muted text-sm">Completed On</p>
-                            <p className="font-semibold text-casino-text">{new Date(candidate.preEmploymentTest.completedAt).toLocaleDateString()}</p>
+                            <p className="font-semibold text-casino-text">{new Date(formData.preEmploymentTest.completedAt).toLocaleDateString()}</p>
                         </div>
                         <div>
                             <p className="text-casino-text-muted text-sm">Score</p>
-                            <p className="text-3xl font-bold text-casino-gold">{candidate.preEmploymentTest.score} <span className="text-lg text-casino-text-muted">/ 40</span></p>
+                            <p className="text-3xl font-bold text-casino-gold">{formData.preEmploymentTest.score} <span className="text-lg text-casino-text-muted">/ 40</span></p>
                         </div>
                          <div>
                             <p className="text-casino-text-muted text-sm">Rating</p>
-                            <p className={`text-xl font-bold ${getTestRating(candidate.preEmploymentTest.score).color}`}>{getTestRating(candidate.preEmploymentTest.score).text}</p>
+                            <p className={`text-xl font-bold ${getTestRating(formData.preEmploymentTest.score).color}`}>{getTestRating(formData.preEmploymentTest.score).text}</p>
                         </div>
                     </div>
                 </Card>
@@ -940,22 +869,23 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             )}
 
             <Card title="Comments Log">
-                {(candidate.comments && candidate.comments.length > 0) ? (
+                {(formData.comments && formData.comments.length > 0) ? (
                     <ul className="space-y-4">
-                    {candidate.comments.slice().reverse().map(comment => (
-                        <li key={comment.id} className="flex items-start pb-3 border-b border-gray-700 last:border-b-0">
-                        <div className="bg-casino-accent text-casino-primary rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0" title={`${comment.user} (${comment.role})`}>
-                            {comment.user.charAt(0)}
-                        </div>
-                        <div>
-                            <p className="text-sm text-casino-text">{comment.comment}</p>
-                            <p className="text-xs text-casino-text-muted mt-1">
-                            <strong>{comment.user}</strong> (ID: {comment.empId})
-                            </p>
-                            <p className="text-xs text-casino-text-muted">
-                            {new Date(comment.timestamp).toLocaleString()}
-                            </p>
-                        </div>
+                    {formData.comments.slice().reverse().map(comment => (
+                        <li key={comment.id} className="bg-casino-primary p-4 rounded-lg shadow-inner">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center">
+                                    <div className="bg-casino-accent text-casino-primary rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">
+                                        {comment.user.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-casino-text">{comment.user} <span className="text-xs font-normal text-casino-text-muted">({comment.role})</span></p>
+                                        <p className="text-xs text-casino-text-muted">ID: {comment.empId}</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-casino-text-muted flex-shrink-0 ml-2">{new Date(comment.timestamp).toLocaleString()}</p>
+                            </div>
+                            <p className="text-sm text-casino-text pl-11 whitespace-pre-wrap">{comment.comment}</p>
                         </li>
                     ))}
                     </ul>
@@ -968,7 +898,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
               <ul className="space-y-4">
                 {formData.statusHistory.slice().reverse().map(log => (
                   <li key={log.id} className="flex items-start">
-                    <div className={`w-3 h-3 ${STATUS_COLORS[candidate.status] || 'bg-gray-400'} rounded-full mt-1.5 mr-3`}></div>
+                    <div className={`w-3 h-3 ${STATUS_COLORS[originalCandidate.status] || 'bg-gray-400'} rounded-full mt-1.5 mr-3`}></div>
                     <div>
                       <p className="font-semibold text-casino-text">{log.action}</p>
                       <p className="text-xs text-casino-text-muted">{log.user} ({log.role})</p>

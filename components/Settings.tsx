@@ -4,7 +4,6 @@ import { Card } from './common/Card';
 import { Icon } from './common/Icon';
 import { USER_ROLES, JOB_ROLES, DEPARTMENTS } from '../constants';
 import { AppContext } from '../App';
-import { ImportModal } from './common/ImportModal';
 
 interface SettingsProps {
   candidates: Candidate[];
@@ -49,7 +48,6 @@ const ListCard: React.FC<{ title: string; items: readonly string[] }> = ({ title
 
 export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
   const { currentRole } = useContext(AppContext);
-  const [isImportModalOpen, setIsImportModalOpen] = React.useState(false);
 
   const handleExportData = () => {
     // Sanitize the entire candidates array to remove Firestore-specific complexities and circular references.
@@ -104,8 +102,6 @@ export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
   };
 
   return (
-    <>
-      <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
       <div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-casino-gold flex items-center">
@@ -136,12 +132,8 @@ export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
               <section>
                 <h2 className="text-xl font-semibold text-casino-text-muted mb-4">Data Management</h2>
                 <Card>
-                    <p className="text-casino-text-muted mb-4">Import or export all candidate data. Importing will overwrite existing data with the content from the CSV file.</p>
+                    <p className="text-casino-text-muted mb-4">Export all candidate data to a backup CSV file.</p>
                     <div className="flex items-center space-x-4">
-                        <button onClick={() => setIsImportModalOpen(true)} className="bg-casino-accent hover:bg-yellow-700 text-casino-primary font-bold py-2 px-4 rounded-lg flex items-center transition-colors">
-                            <Icon name="upload" className="w-5 h-5 mr-2" />
-                            Import Data (CSV)
-                        </button>
                         <button onClick={handleExportData} className="bg-casino-secondary hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-colors">
                             <Icon name="download" className="w-5 h-5 mr-2" />
                             Export Data (CSV)
@@ -152,6 +144,5 @@ export const Settings: React.FC<SettingsProps> = ({ candidates }) => {
           )}
         </div>
       </div>
-    </>
   );
 };
