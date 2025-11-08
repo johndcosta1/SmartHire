@@ -32,6 +32,20 @@ const formatTimeAgo = (timestamp: string): string => {
     return `${years} years ago`;
 }
 
+const sanitizeForExport = (obj: any) => {
+    const cache = new Set();
+    // This is safe because JSON.parse will create a new plain object
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) {
+                return; // Remove circular references
+            }
+            cache.add(value);
+        }
+        return value;
+    }));
+};
+
 const MetricCard: React.FC<{ value: number; label: string; icon: React.ComponentProps<typeof Icon>['name']; color: string; to: string; state?: object; }> = ({ value, label, icon, color, to, state }) => (
     <Link to={to} state={state} className="block hover:scale-105 hover:shadow-lg transition-transform duration-200 rounded-lg">
         <Card className="flex items-center space-x-4 h-full">
@@ -46,7 +60,65 @@ const MetricCard: React.FC<{ value: number; label: string; icon: React.Component
     </Link>
 );
 
+const QuickActionButton: React.FC<{ onClick: () => void, text: string, icon: React.ComponentProps<typeof Icon>['name'] }> = ({ onClick, text, icon }) => (
+    <button type="button" onClick={onClick} className="bg-casino-secondary hover:bg-gray-700 text-casino-text font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors">
+        <Icon name={icon} className="w-5 h-5 mr-2" />
+        {text}
+    </button>
+);
+
+
 export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates }) => {
+
+    const handleExportData = () => {
+        const sanitizedCandidates = sanitizeForExport(candidates);
+
+        const formatCsvCell = (data: any): string => {
+            if (data === null || data === undefined) return '';
+            if (typeof data === 'object') {
+                data = JSON.stringify(data);
+            }
+            let cell = String(data);
+            cell = cell.replace(/"/g, '""');
+            if (cell.search(/("|,|\n)/g) >= 0) {
+                cell = `"${cell}"`;
+            }
+            return cell;
+        };
+
+        const headers = [
+          'id', 'photoUrl', 'fullName', 'dob', 'age', 'contact',
+          'emergencyContact', 'address',
+          'medicalConditions', 'religion', 'maritalStatus', 'vacancy',
+          'positionOffered', 'department', 'expectedSalary',
+          'accommodationRequired', 'transportRequired',
+          'totalWorkExperience', 'languagesKnown',
+          'ratings', 'preEmploymentTest', 'references', 'qualifications', 'workExperience',
+          'status', 'statusHistory', 'comments', 'rejection',
+          'interview', 'surveillanceReport',
+          'offer', 'employeeId', 'createdAt'
+        ];
+        
+        const csvRows = [headers.join(',')];
+
+        for (const candidate of sanitizedCandidates) {
+            const values = headers.map(header => formatCsvCell((candidate as any)[header] ?? ''));
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `smarthire_candidates_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
 
     const metrics = useMemo(() => {
         const allMetrics = {
@@ -131,6 +203,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
                         {availableQuickActions.map(action => (
                             <QuickAction key={action.to} to={action.to} text={action.text} icon={action.icon} />
                         ))}
+                         {currentRole === UserRole.HR && (
+                            <QuickActionButton onClick={handleExportData} text="Export Candidates" icon="download" />
+                        )}
                         </div>
                     </Card>
                 </div>

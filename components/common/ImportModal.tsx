@@ -1,9 +1,11 @@
+
+
 import React, { useRef } from 'react';
 import { Candidate } from '../../types';
 import { Card } from './Card';
 import { Icon } from './Icon';
 import { db } from '../../firebaseConfig';
-import { writeBatch, doc } from 'firebase/firestore';
+import { ref, update } from 'firebase/database';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -80,19 +82,19 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose }) => 
                 newCandidates.push(candidateObj as Candidate);
             }
             
-            const batch = writeBatch(db);
+            const updates: { [key: string]: any } = {};
             newCandidates.forEach((candidate) => {
                 if (candidate.id) {
-                    const docRef = doc(db, "candidates", candidate.id);
-                    batch.set(docRef, candidate);
+                    const { id, ...data } = candidate;
+                    updates[`/candidates/${id}`] = data;
                 }
             });
-            await batch.commit();
+            await update(ref(db), updates);
 
             alert(`${newCandidates.length} records imported successfully! The page will now reflect the new data.`);
             onClose();
         } catch (error) {
-            console.error("Error importing data to Firestore:", error);
+            console.error("Error importing data to Firebase:", error);
             alert("Failed to import data. Please check the file format and console for errors.");
         } finally {
             if(fileInputRef.current) {

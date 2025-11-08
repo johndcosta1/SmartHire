@@ -1,11 +1,11 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 
 // =====================================================================================
 // === CRITICAL SETUP REQUIRED =======================================================
 // =====================================================================================
 //
-// To connect the application to your Google Cloud database (Firestore), you MUST
+// To connect the application to your Google Cloud database (Firebase), you MUST
 // replace the placeholder values below with your actual Firebase project configuration.
 //
 // HOW TO GET YOUR CONFIGURATION:
@@ -26,11 +26,12 @@ const firebaseConfig = {
   projectId: "YOUR_PROJECT_ID", // <-- PASTE YOURS HERE
   storageBucket: "YOUR_PROJECT_ID.appspot.com", // <-- PASTE YOURS HERE
   messagingSenderId: "YOUR_SENDER_ID", // <-- PASTE YOURS HERE
-  appId: "YOUR_APP_ID" // <-- PASTE YOURS HERE
+  appId: "YOUR_APP_ID", // <-- PASTE YOURS HERE
+  databaseURL: "https://smarthire-72866-default-rtdb.firebaseio.com/"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+// Initialize Realtime Database and get a reference to the service
+export const db = getDatabase(app);

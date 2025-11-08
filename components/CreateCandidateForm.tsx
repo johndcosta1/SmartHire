@@ -37,11 +37,11 @@ const initialFormData: Partial<FormData> = {
         hr: { 
             score: 0, 
             interviewer: '',
-            personality: undefined,
-            attitude: undefined,
-            presentable: undefined,
-            communication: undefined,
-            confidence: undefined,
+            personality: 0,
+            attitude: 0,
+            presentable: 0,
+            communication: 0,
+            confidence: 0,
             evaluation: '',
         },
         manager: { score: 1 },
@@ -78,26 +78,39 @@ export const CreateCandidateForm: React.FC<CreateCandidateFormProps> = ({ onSubm
         const { name, value, type } = e.target;
         const checked = (e.target as HTMLInputElement).checked;
 
+        const finalValue = type === 'checkbox' 
+            ? checked 
+            : type === 'number' 
+            ? (value === '' ? 0 : parseFloat(value)) 
+            : value;
+
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData(prev => ({
                 ...prev,
-                [parent]: { ...(prev as any)[parent], [child]: type === 'checkbox' ? checked : value }
+                [parent]: { 
+                    ...(prev as any)[parent], 
+                    [child]: finalValue 
+                }
             }));
         } else {
             setFormData(prev => ({
                 ...prev,
-                [name]: type === 'checkbox' ? checked : value
+                [name]: finalValue
             }));
         }
     };
     
-    // Simplified handler for repeating fields
     const handleRepeatingChange = (section: 'qualifications' | 'workExperience' | 'references', index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => {
-            const newSection = [...(prev[section] || [])];
-            (newSection[index] as any)[name] = value;
+            const oldSection = prev[section] || [];
+            const newSection = oldSection.map((item, i) => {
+                if (i === index) {
+                    return { ...item, [name]: value };
+                }
+                return item;
+            });
             return { ...prev, [section]: newSection };
         });
     };
@@ -113,13 +126,18 @@ export const CreateCandidateForm: React.FC<CreateCandidateFormProps> = ({ onSubm
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const finalData: Partial<Candidate> = {
-            ...formData,
-            photoUrl: photoPreview || undefined,
-        };
-        const newCandidate = await addCandidate(finalData);
-        if (onSubmissionSuccess) {
-            onSubmissionSuccess(newCandidate);
+        try {
+            const finalData: Partial<Candidate> = {
+                ...formData,
+                photoUrl: photoPreview || '',
+            };
+            const newCandidate = await addCandidate(finalData);
+            if (onSubmissionSuccess) {
+                onSubmissionSuccess(newCandidate);
+            }
+        } catch (error) {
+            console.error("Submission failed:", error);
+            alert("There was an error submitting your application. Please check your network connection and try again.");
         }
     };
     

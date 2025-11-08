@@ -270,7 +270,6 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     formData?.ratings?.hr?.communication,
     formData?.ratings?.hr?.confidence,
     currentRole,
-    formData,
   ]);
 
 
