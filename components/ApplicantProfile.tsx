@@ -484,6 +484,17 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   };
   
   const handlePrint = () => {
+    if (!formData) return;
+    const originalTitle = document.title;
+    document.title = `SmartHire_Profile_${formData.fullName.replace(/ /g, '_')}`;
+    
+    const afterPrint = () => {
+      document.title = originalTitle;
+      window.removeEventListener('afterprint', afterPrint);
+    };
+
+    window.addEventListener('afterprint', afterPrint);
+    
     window.print();
   };
   
@@ -572,7 +583,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                 </div>
             </div>
              <div className="flex items-center space-x-4">
-                {currentRole === UserRole.HOD && (
+                {(currentRole === UserRole.HOD || currentRole === UserRole.Admin) && (
                 <button
                     type="button"
                     onClick={handlePrint}
