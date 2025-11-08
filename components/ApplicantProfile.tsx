@@ -812,7 +812,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                 ApplicationStatus.JoiningScheduled,
                 ApplicationStatus.Joined,
               ].includes(formData.status) && (
-                <Card title="Offer Details">
+                <Card title="Offer Details" className="no-print">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       label="Offered Salary"
@@ -855,7 +855,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                   </div>
               )}
           </div>
-          <div className="space-y-6">
+          <div className="space-y-6 no-print">
             <div className="no-print">
               {renderActionPanel()}
             </div>

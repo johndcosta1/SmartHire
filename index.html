@@ -63,83 +63,86 @@
     display: none;
   }
   @media print {
-    body {
-      background-color: white !important;
-      color: black !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+    /* --- Stage 1: Isolate the printable content --- */
+    /* Hide everything on the page by default */
+    body * {
+      visibility: hidden;
     }
-    .no-print, .no-print-in-profile {
-      display: none !important;
+    /* Then, make the profile and all its children visible again */
+    #printable-profile, #printable-profile * {
+      visibility: visible;
     }
-    .print-only-text {
-      display: inline !important;
-      font-size: 14px;
-    }
-    #root, main {
-      display: block !important;
-      height: auto !important;
-      overflow: visible !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
+    /* Position the profile to fill the print page, removing any layout constraints */
     #printable-profile {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
       margin: 0;
-      padding: 1rem;
-      color: black;
-      box-shadow: none;
-      border: none;
-    }
-    #printable-profile .bg-casino-secondary, 
-    #printable-profile .bg-casino-primary {
-       background-color: white !important;
-       box-shadow: none;
-       border: 1px solid #ccc;
-    }
-    #printable-profile .text-casino-gold { color: #8B572A !important; }
-    #printable-profile .text-casino-text,
-    #printable-profile .text-casino-text-muted { color: black !important; }
-    
-    /* Force single column layout */
-    #printable-profile .lg\\:grid-cols-3, #printable-profile .grid {
-      display: block !important;
-    }
-    #printable-profile .lg\\:col-span-2 {
-      width: 100% !important;
-    }
-    #printable-profile .space-y-6 > * + * {
-      margin-top: 1.5rem;
+      padding: 0;
     }
 
-    /* Style form fields to look like a report */
+    /* --- Stage 2: Clean up the appearance for printing --- */
+    /* Force a white background and black text for all elements inside the profile */
+    #printable-profile, #printable-profile * {
+      background: white !important;
+      color: black !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    /* Remove shadows and set simple borders for a clean report look */
+    #printable-profile .shadow-lg, #printable-profile .shadow-inner {
+      box-shadow: none !important;
+    }
+    #printable-profile .rounded-lg {
+      border: 1px solid #e5e7eb; /* light grey border */
+      border-radius: 0 !important;
+    }
+    #printable-profile .border, #printable-profile .border-gray-700, #printable-profile .border-gray-600 {
+      border-color: #e5e7eb !important;
+    }
+    
+    /* Force a single column layout by overriding grid styles */
+    #printable-profile .grid {
+      display: block !important;
+    }
+
+    /* --- Stage 3: Hide non-essential interactive elements --- */
+    /* Hide anything explicitly marked with .no-print or .no-print-in-profile */
+    .no-print, .no-print *, .no-print-in-profile, .no-print-in-profile * {
+      display: none !important;
+    }
+    /* Also hide all buttons, as they are not needed in a PDF */
+    #printable-profile button {
+      display: none !important;
+    }
+    
+    /* --- Stage 4: Style form fields to look like static text --- */
+    /* Remove borders and backgrounds from form inputs */
     #printable-profile input, 
     #printable-profile textarea, 
     #printable-profile select {
       border: none !important;
-      border-bottom: 1px solid #ccc !important;
-      background-color: transparent !important;
-      padding: 2px 0 !important;
-      color: black !important;
-      border-radius: 0 !important;
+      padding: 0 !important;
       box-shadow: none !important;
       -webkit-appearance: none;
       appearance: none;
-    }
-    #printable-profile textarea {
       resize: none;
       height: auto;
     }
+    
+    /* Ensure text in disabled fields is still black and fully visible */
     #printable-profile input:disabled, 
     #printable-profile textarea:disabled, 
     #printable-profile select:disabled {
-      color: black !important;
-      opacity: 1;
+        opacity: 1 !important;
+        -webkit-text-fill-color: black !important;
     }
-    #printable-profile .border, #printable-profile .border-gray-700 {
-        border-color: #ccc !important;
-    }
-    #printable-profile button {
-       display: none !important;
+    
+    /* Handle checkboxes for print by showing the text label instead of the box */
+    .print-only-text {
+      display: inline !important;
     }
   }
 </style>
