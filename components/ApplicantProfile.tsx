@@ -16,6 +16,34 @@ import { HiringStatusTracker } from './common/HiringStatusTracker';
 const sanitizeObject = <T extends {}>(obj: T | null | undefined): T | null => {
     if (!obj) return null;
     const cache = new Set();
+    // Initialize hr ratings if they don't exist
+    if ('ratings' in (obj as any) && (obj as any).ratings && (obj as any).ratings.hr === undefined) {
+        (obj as any).ratings.hr = {
+            score: 0,
+            interviewer: '',
+            personality: 0,
+            attitude: 0,
+            presentable: 0,
+            communication: 0,
+            confidence: 0,
+            evaluation: '',
+        };
+    } else if ('ratings' in (obj as any) && (obj as any).ratings === undefined) {
+         (obj as any).ratings = {
+            hr: {
+                score: 0,
+                interviewer: '',
+                personality: 0,
+                attitude: 0,
+                presentable: 0,
+                communication: 0,
+                confidence: 0,
+                evaluation: '',
+            }
+         }
+    }
+
+
     return JSON.parse(JSON.stringify(obj, (key, value) => {
         if (typeof value === 'object' && value !== null) {
             if (cache.has(value)) {
@@ -229,39 +257,33 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   }, [originalCandidate]);
 
   useEffect(() => {
-    if (currentRole !== UserRole.HR || !formData) return;
+    if (currentRole !== UserRole.HR || !formData || !formData.ratings || !formData.ratings.hr) return;
 
-    const hrRatings = formData?.ratings?.hr;
-    if (hrRatings) {
-        const scores = [
-            hrRatings.personality,
-            hrRatings.attitude,
-            hrRatings.presentable,
-            hrRatings.communication,
-            hrRatings.confidence,
-        ].filter((s): s is number => typeof s === 'number' && s >= 1 && s <= 5);
+    const hrRatings = formData.ratings.hr;
+    const scores = [
+        hrRatings.personality,
+        hrRatings.attitude,
+        hrRatings.presentable,
+        hrRatings.communication,
+        hrRatings.confidence,
+    ].filter((s): s is number => typeof s === 'number' && s >= 1 && s <= 5);
 
-        const newScore = scores.length > 0
-            ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1))
-            : 0;
+    const newScore = scores.length > 0
+        ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1))
+        : 0;
 
-        if (hrRatings.score !== newScore) {
-            setFormData(prev => {
-                if (!prev) return prev;
-                 const existingRatings = prev.ratings || {};
-                 const existingHrRatings = existingRatings.hr || {};
-                 return {
-                    ...prev,
-                    ratings: {
-                        ...existingRatings,
-                        hr: {
-                            ...existingHrRatings,
-                            score: newScore,
-                        },
-                    },
-                };
-            });
-        }
+    if (hrRatings.score !== newScore) {
+        setFormData(prev => {
+            if (!prev) return prev;
+                const updatedRatings = {
+                ...prev.ratings,
+                hr: {
+                    ...(prev.ratings?.hr || {}),
+                    score: newScore,
+                },
+            };
+            return { ...prev, ratings: updatedRatings };
+        });
     }
   }, [
     formData?.ratings?.hr?.personality,
@@ -270,6 +292,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
     formData?.ratings?.hr?.communication,
     formData?.ratings?.hr?.confidence,
     currentRole,
+    formData, // Add formData to dependencies as we are accessing formData.ratings.hr
   ]);
 
 
@@ -583,7 +606,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                 </div>
             </div>
              <div className="flex items-center space-x-4">
-                {(currentRole === UserRole.HOD || currentRole === UserRole.Admin) && (
+                {currentRole === UserRole.Admin && (
                 <button
                     type="button"
                     onClick={handlePrint}
