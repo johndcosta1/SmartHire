@@ -1012,6 +1012,50 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
             </Card>
           </div>
         </div>
+
+        {/* Print-only section for logs at the bottom of the document */}
+        <div className="print-only-block space-y-6 mt-6">
+            <Card title="Comments Log">
+                {(formData.comments && formData.comments.length > 0) ? (
+                    <ul className="space-y-4">
+                    {formData.comments.slice().reverse().map(comment => (
+                        <li key={comment.id} className="bg-casino-primary p-4 rounded-lg shadow-inner">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center">
+                                    <div className="bg-casino-accent text-casino-primary rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">
+                                        {comment.user.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-casino-text">{comment.user} <span className="text-xs font-normal text-casino-text-muted">({comment.role})</span></p>
+                                        <p className="text-xs text-casino-text-muted">ID: {comment.empId}</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-casino-text-muted flex-shrink-0 ml-2">{new Date(comment.timestamp).toLocaleString()}</p>
+                            </div>
+                            <p className="text-sm text-casino-text pl-11 whitespace-pre-wrap">{comment.comment}</p>
+                        </li>
+                    ))}
+                    </ul>
+                ) : (
+                    <p className="text-casino-text-muted text-center py-4">No comments yet.</p>
+                )}
+            </Card>
+
+            <Card title="Audit Trail">
+              <ul className="space-y-4">
+                {formData.statusHistory.slice().reverse().map(log => (
+                  <li key={log.id} className="flex items-start">
+                    <div className={`w-3 h-3 ${STATUS_COLORS[originalCandidate.status] || 'bg-gray-400'} rounded-full mt-1.5 mr-3`}></div>
+                    <div>
+                      <p className="font-semibold text-casino-text">{log.action}</p>
+                      <p className="text-xs text-casino-text-muted">{log.user} ({log.role})</p>
+                      <p className="text-xs text-casino-text-muted">{new Date(log.timestamp).toLocaleString()}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+        </div>
       </form>
     </div>
   );
