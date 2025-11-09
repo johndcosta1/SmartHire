@@ -689,7 +689,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
               <Card title="Personal Details">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-content-grid">
                       <FormField label="Full Name" name="fullName" value={formData.fullName} onChange={handleChange} required disabled={!canEdit} />
                       <FormField label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} required disabled={!canEdit} />
                       <FormField label="Age" name="age" type="number" value={formData.age || ''} onChange={handleChange} disabled={!canEdit} />
@@ -705,14 +705,14 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
               </Card>
               
                <Card title="Qualifications & Experience">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 card-content-grid">
                       <FormField label="Total Work Experience (Years)" name="totalWorkExperience" type="number" value={formData.totalWorkExperience || ''} onChange={handleChange} disabled={!canEdit}/>
                       <FormField label="Languages Known" name="languagesKnown" value={formData.languagesKnown || ''} onChange={handleChange} placeholder="e.g., English, Hindi, Konkani" disabled={!canEdit}/>
                   </div>
                   <div className="mt-4">
                        <h4 className="text-casino-text-muted font-semibold mb-2">Qualifications (Max 3)</h4>
                       {(formData.qualifications || []).map((q, i) => (
-                           <div key={i} className="grid grid-cols-3 gap-2 p-2 border border-gray-700 rounded mb-2">
+                           <div key={i} className="repeating-section-item grid grid-cols-3 gap-2 p-2 border border-gray-700 rounded mb-2">
                               <input name="name" value={q.name} onChange={(e) => handleRepeatingChange('qualifications', i, e)} placeholder="Qualification" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
                               <input name="institute" value={q.institute} onChange={(e) => handleRepeatingChange('qualifications', i, e)} placeholder="Institute" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
                               <input name="year" value={q.year} onChange={(e) => handleRepeatingChange('qualifications', i, e)} placeholder="Year" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
@@ -723,7 +723,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                    <div className="mt-4">
                        <h4 className="text-casino-text-muted font-semibold mb-2">Work Experience (Max 3)</h4>
                       {(formData.workExperience || []).map((w, i) => (
-                           <div key={i} className="p-2 border border-gray-700 rounded mb-2 space-y-2">
+                           <div key={i} className="repeating-section-item p-2 border border-gray-700 rounded mb-2 space-y-2">
                               <div className="grid grid-cols-2 gap-2">
                                   <input name="company" value={w.company} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
                                   <input name="role" value={w.role} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Role" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
@@ -737,7 +737,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                   <div className="mt-4">
                        <h4 className="text-casino-text-muted font-semibold mb-2">References (Max 3)</h4>
                       {(formData.references || []).map((r, i) => (
-                           <div key={i} className="p-2 border border-gray-700 rounded mb-2 space-y-2">
+                           <div key={i} className="repeating-section-item p-2 border border-gray-700 rounded mb-2 space-y-2">
                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                                    <input name="name" value={r.name} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Name" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
                                    <input name="relation" value={r.relation} onChange={(e) => handleRepeatingChange('references', i, e)} placeholder="Relation" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
@@ -854,7 +854,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
               )}
 
               <Card title="Job & Compensation">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-content-grid">
                       <FormField label="Job Role Applied For" name="vacancy" type="text" value={formData.vacancy} onChange={handleChange} placeholder="e.g., Senior Croupier" required disabled={!canEditJobSection} />
                       <FormField label="Department" name="department" type="select" options={DEPARTMENTS} value={formData.department || ''} onChange={handleChange} disabled={!canEditJobSection} />
                       {canViewSensitiveInfo && <FormField label="Expected Salary" name="expectedSalary" type="number" value={formData.expectedSalary} onChange={handleChange} disabled={!canEditJobSection} />}
@@ -865,7 +865,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                    {canViewSensitiveInfo && (
                     <div className="mt-6 pt-4 border-t border-gray-700">
                       <h4 className="text-lg font-semibold text-casino-text-muted mb-3">Other Evaluations</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-content-grid">
                           <FormField label="Manager Total Rating (1-5)" name="ratings.manager.score" type="number" min="1" max="5" value={formData.ratings?.manager?.score || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
                           <FormField label="CM Total Rating (1-5)" name="ratings.cm.score" type="number" min="1" max="5" value={formData.ratings?.cm?.score || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
                           <FormField label="Department Interviewer Name" name="ratings.department.interviewer" value={formData.ratings?.department?.interviewer || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
@@ -881,7 +881,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                 ApplicationStatus.Joined,
               ].includes(formData.status) && (
                 <Card title="Offer Details" className="no-print">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 card-content-grid">
                     <FormField
                       label="Offered Salary"
                       name="offer.salary"

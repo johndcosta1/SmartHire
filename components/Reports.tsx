@@ -27,7 +27,8 @@ const BarChart: React.FC<{ data: Record<string, number> }> = ({ data }) => {
   if (values.length === 0) {
     return null;
   }
-  const maxValue = Math.max(...values);
+  // FIX: Cast `values` to `number[]` to fix "Argument of type 'unknown' is not assignable to parameter of type 'number'" error.
+  const maxValue = Math.max(...values as number[]);
   if (maxValue === 0) return null;
   const colors = ['#3b82f6', '#22c55e', '#a855f7', '#eab308', '#ef4444', '#6366f1', '#ec4899', '#f97316'];
 

@@ -64,62 +64,79 @@
   }
   @media print {
     /* --- Stage 1: Isolate the printable content --- */
-    /* Hide everything on the page by default */
-    body * {
-      visibility: hidden;
-    }
-    /* Then, make the profile and all its children visible again */
-    #printable-profile, #printable-profile * {
-      visibility: visible;
-    }
-    /* Position the profile to fill the print page, removing any layout constraints */
+    body * { visibility: hidden; }
+    #printable-profile, #printable-profile * { visibility: visible; }
     #printable-profile {
       position: absolute;
       left: 0;
       top: 0;
       width: 100%;
       margin: 0;
-      padding: 0;
+      padding: 1rem;
     }
 
     /* --- Stage 2: Clean up the appearance for printing --- */
-    /* Force a white background and black text for all elements inside the profile */
     #printable-profile, #printable-profile * {
       background: white !important;
       color: black !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      font-size: 10pt;
     }
-    
-    /* Remove shadows and set simple borders for a clean report look */
-    #printable-profile .shadow-lg, #printable-profile .shadow-inner {
-      box-shadow: none !important;
-    }
-    #printable-profile .rounded-lg {
-      border: 1px solid #e5e7eb; /* light grey border */
+    #printable-profile .shadow-lg, #printable-profile .shadow-inner { box-shadow: none !important; }
+    #printable-profile .rounded-lg { /* This targets the Card component */
+      border: 1px solid #ccc !important;
       border-radius: 0 !important;
+      margin-bottom: 1.5rem;
+      break-inside: avoid; /* Prevent cards from splitting across pages */
     }
-    #printable-profile .border, #printable-profile .border-gray-700, #printable-profile .border-gray-600 {
-      border-color: #e5e7eb !important;
-    }
+    #printable-profile .border, #printable-profile .border-gray-700, #printable-profile .border-gray-600 { border-color: #ccc !important; }
+    #printable-profile .p-6 { padding: 1rem !important; }
+    #printable-profile .p-4 { padding: 0.75rem !important; }
     
-    /* Force a single column layout by overriding grid styles */
-    #printable-profile .grid {
-      display: block !important;
+    /* Typography */
+    #printable-profile .text-3xl { font-size: 18pt !important; }
+    #printable-profile h3.text-lg { /* Card titles */
+        font-size: 12pt !important;
+        font-weight: bold;
+        border-bottom: 1px solid #ccc !important;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 1rem !important;
     }
 
     /* --- Stage 3: Hide non-essential interactive elements --- */
-    /* Hide anything explicitly marked with .no-print or .no-print-in-profile */
-    .no-print, .no-print *, .no-print-in-profile, .no-print-in-profile * {
-      display: none !important;
-    }
-    /* Also hide all buttons, as they are not needed in a PDF */
-    #printable-profile button {
-      display: none !important;
-    }
+    .no-print, .no-print *, .no-print-in-profile, .no-print-in-profile * { display: none !important; }
+    #printable-profile button { display: none !important; }
+    #printable-profile .ring-2, #printable-profile .ring-4 { ring-width: 0 !important; box-shadow: none !important; }
     
-    /* --- Stage 4: Style form fields to look like static text --- */
-    /* Remove borders and backgrounds from form inputs */
+    /* --- Stage 4: Layout and Alignment --- */
+    /* Force a two-column layout for grids inside cards for better alignment */
+    #printable-profile .card-content-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.5rem 1.5rem !important;
+    }
+    /* Allow specific fields to span both columns */
+    #printable-profile .card-content-grid .md\:col-span-2,
+    #printable-profile .card-content-grid .lg\:col-span-3 {
+        grid-column: span 2 / span 2 !important;
+    }
+
+    /* --- Stage 5: Style form fields to look like static text --- */
+    /* Style the label and container for better readability */
+    #printable-profile .form-field-wrapper {
+        padding: 0.3rem 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        flex-direction: column;
+        break-inside: avoid;
+    }
+    #printable-profile .form-field-wrapper label {
+        font-size: 8pt !important;
+        font-weight: 600 !important;
+        color: #555 !important;
+        margin-bottom: 4px;
+    }
     #printable-profile input, 
     #printable-profile textarea, 
     #printable-profile select {
@@ -130,19 +147,39 @@
       appearance: none;
       resize: none;
       height: auto;
+      width: 100%;
+      background: transparent !important;
     }
-    
-    /* Ensure text in disabled fields is still black and fully visible */
     #printable-profile input:disabled, 
     #printable-profile textarea:disabled, 
     #printable-profile select:disabled {
         opacity: 1 !important;
         -webkit-text-fill-color: black !important;
     }
-    
-    /* Handle checkboxes for print by showing the text label instead of the box */
-    .print-only-text {
-      display: inline !important;
+    .print-only-text { display: inline !important; }
+
+    /* --- Stage 6: Special handling for complex sections --- */
+    #printable-profile h4 { /* Sub-headings inside cards */
+        font-size: 10pt !important;
+        font-weight: bold;
+        margin-top: 1rem;
+        border-bottom: 1px dotted #ccc;
+        padding-bottom: 0.25rem;
+    }
+    #printable-profile .repeating-section-item {
+        border: 1px solid #ddd !important;
+        padding: 0.5rem !important;
+        margin-top: 0.5rem !important;
+        border-radius: 0 !important;
+        break-inside: avoid;
+    }
+    #printable-profile .repeating-section-item .grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.25rem 1rem !important;
+    }
+    #printable-profile .repeating-section-item input {
+        border-bottom: 1px dotted #ccc !important;
     }
   }
 </style>

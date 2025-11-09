@@ -63,7 +63,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   };
 
   return (
-    <div className={className}>
+    <div className={`form-field-wrapper ${className}`}>
       <label htmlFor={name} className={labelClasses}>
         {label} {required && <span className="text-casino-danger">*</span>}
       </label>
