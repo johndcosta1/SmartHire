@@ -107,6 +107,34 @@
     /* --- Stage 3: Hide non-essential interactive elements --- */
     .no-print, .no-print *, .no-print-in-profile, .no-print-in-profile * { display: none !important; }
     #printable-profile button { display: none !important; }
+    
+    /* --- Stage 3a: Special handling for Star Ratings in HR Evaluation --- */
+    #printable-profile .print-star-rating {
+        display: flex !important; /* Ensure the container is visible and lays out children */
+    }
+    #printable-profile .print-star-rating button {
+        display: inline-block !important; /* Override the global button hide rule */
+        font-size: 14pt !important;
+        font-family: sans-serif !important; /* Use a common font for better char support */
+        line-height: 1 !important;
+        padding: 0 !important;
+        margin: 0 1px !important;
+        border: none !important;
+        background: transparent !important;
+        -webkit-appearance: none;
+        appearance: none;
+        transform: none !important; /* Reset any transforms */
+        transition: none !important; /* Reset any transitions */
+    }
+    /* Style for filled stars (which have text-casino-gold class) */
+    #printable-profile .print-star-rating button.text-casino-gold {
+        color: #000000 !important; /* Make filled stars solid black */
+    }
+    /* Style for empty stars (which have text-gray-600 class) */
+    #printable-profile .print-star-rating button.text-gray-600 {
+        color: #cccccc !important; /* Make empty stars light gray */
+    }
+
     #printable-profile .ring-2, #printable-profile .ring-4 { ring-width: 0 !important; box-shadow: none !important; }
     
     /* --- Stage 4: Layout and Alignment --- */

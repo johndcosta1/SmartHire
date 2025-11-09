@@ -247,7 +247,7 @@ const StarRating: React.FC<{
   disabled?: boolean;
 }> = ({ score, onRate, disabled }) => {
   return (
-    <div className="flex space-x-1">
+    <div className="flex space-x-1 print-star-rating">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           type="button"
