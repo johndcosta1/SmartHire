@@ -20,6 +20,8 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>(location.state?.status || 'All');
     const [departmentFilter, setDepartmentFilter] = useState<string>('All');
+    const [interviewDateFilter, setInterviewDateFilter] = useState<string>('');
+
 
     const filteredCandidates = useMemo(() => {
         return candidates
@@ -27,10 +29,11 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
                 const matchesSearch = c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toLowerCase().includes(searchTerm.toLowerCase()) || c.vacancy.toLowerCase().includes(searchTerm.toLowerCase());
                 const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
                 const matchesDepartment = departmentFilter === 'All' || c.department === departmentFilter;
-                return matchesSearch && matchesStatus && matchesDepartment;
+                const matchesInterviewDate = !interviewDateFilter || (c.interview?.date === interviewDateFilter);
+                return matchesSearch && matchesStatus && matchesDepartment && matchesInterviewDate;
             })
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [candidates, searchTerm, statusFilter, departmentFilter]);
+    }, [candidates, searchTerm, statusFilter, departmentFilter, interviewDateFilter]);
 
     const handleExport = () => {
         const headers = [
@@ -97,8 +100,8 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
             </div>
 
             <Card>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-casino-primary rounded-lg">
-                    <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4 bg-casino-primary rounded-lg">
+                    <div className="relative lg:col-span-2">
                         <input
                             type="text"
                             placeholder="Search by name, ID, vacancy..."
@@ -118,6 +121,16 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
                         <option value="All">All Departments</option>
                         {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
+                     <div className="relative lg:col-span-2">
+                        <label htmlFor="interviewDate" className="text-casino-text-muted text-sm absolute -top-2 left-2 bg-casino-primary px-1">Interview Date</label>
+                        <input
+                            id="interviewDate"
+                            type="date"
+                            value={interviewDateFilter}
+                            onChange={e => setInterviewDateFilter(e.target.value)}
+                            className="w-full bg-casino-secondary border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                        />
+                    </div>
                 </div>
                 
                 <div className="overflow-x-auto">

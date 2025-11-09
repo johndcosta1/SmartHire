@@ -13,6 +13,7 @@ type SurveillanceTab = 'Pending' | 'Cleared' | 'Flagged';
 export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SurveillanceTab>('Pending');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const filteredCandidates = {
     Pending: candidates.filter(c => c.status === ApplicationStatus.PendingSurveillance),
@@ -31,7 +32,10 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
     </button>
   );
 
-  const currentList = filteredCandidates[activeTab];
+  const currentList = (filteredCandidates[activeTab] || []).filter(c => 
+      c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div>
@@ -45,11 +49,23 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
         </div>
       </div>
       
-      <div className="border-b border-gray-700 mb-6">
+      <div className="flex justify-between items-center border-b border-gray-700 mb-6">
           <div className="flex space-x-4">
               <TabButton tab="Pending" label="Pending" icon="clock" />
               <TabButton tab="Cleared" label="Cleared" icon="check-circle" />
               <TabButton tab="Flagged" label="Flagged" icon="exclamation-circle" />
+          </div>
+          <div className="relative w-full max-w-xs">
+              <input
+                  type="text"
+                  placeholder="Search candidate..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full bg-casino-secondary border border-gray-600 rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Icon name="search" className="w-5 h-5 text-casino-text-muted" />
+              </div>
           </div>
       </div>
 
@@ -58,7 +74,7 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
           <div className="text-center py-12">
             <Icon name="search" className="w-16 h-16 text-casino-text-muted mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-casino-text">No Candidates Found</h2>
-            <p className="text-casino-text-muted mt-2">There are no candidates in the "{activeTab}" category.</p>
+            <p className="text-casino-text-muted mt-2">There are no candidates in the "{activeTab}" category {searchTerm && "matching your search"}.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

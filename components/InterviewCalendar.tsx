@@ -11,6 +11,7 @@ interface InterviewCalendarProps {
 export const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ candidates }) => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState('');
 
   const interviews = useMemo(() => {
     const interviewMap = new Map<string, Candidate[]>();
@@ -61,6 +62,18 @@ export const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ candidates
           <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-casino-secondary"><Icon name="chevron-right" className="w-6 h-6" /></button>
         </div>
       </div>
+      <div className="relative mb-4">
+          <input
+              type="text"
+              placeholder="Search candidate..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full bg-casino-secondary border border-gray-600 rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+          />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Icon name="search" className="w-5 h-5 text-casino-text-muted" />
+          </div>
+      </div>
       <Card>
         <div className="grid grid-cols-7 gap-px bg-gray-700">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(dayName => (
@@ -68,7 +81,7 @@ export const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ candidates
           ))}
           {days.map((d, index) => {
             const dateKey = d.toISOString().split('T')[0];
-            const dailyInterviews = interviews.get(dateKey) || [];
+            const dailyInterviews = (interviews.get(dateKey) || []).filter(c => !searchTerm || c.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
             const isCurrentMonth = d.getMonth() === currentDate.getMonth();
             return (
               <div key={index} className={`p-2 h-36 flex flex-col ${isCurrentMonth ? 'bg-casino-primary' : 'bg-casino-secondary'} relative`}>

@@ -48,6 +48,7 @@ const CandidateOfferCard: React.FC<{ candidate: Candidate; activeTab: OfferTab }
 export const HROffers: React.FC<HROffersProps> = ({ candidates }) => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<OfferTab>(location.state?.tab || 'Ready');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const filteredCandidates = {
         Ready: candidates.filter(c => c.status === ApplicationStatus.SurveillanceCleared),
@@ -65,6 +66,11 @@ export const HROffers: React.FC<HROffersProps> = ({ candidates }) => {
             <span className="bg-casino-secondary text-casino-text text-xs font-bold rounded-full px-2 py-0.5">{filteredCandidates[tab].length}</span>
         </button>
     );
+    
+    const currentList = (filteredCandidates[activeTab] || []).filter(c =>
+        c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div>
@@ -75,24 +81,36 @@ export const HROffers: React.FC<HROffersProps> = ({ candidates }) => {
                 </h1>
             </div>
 
-            <div className="border-b border-gray-700 mb-6">
+            <div className="flex justify-between items-center border-b border-gray-700 mb-6">
                 <div className="flex space-x-4">
                     <TabButton tab="Ready" label="Ready for Offer" icon="check-circle" />
                     <TabButton tab="Accepted" label="Offer Accepted" icon="document-text" />
                     <TabButton tab="Scheduled" label="Joining Scheduled" icon="calendar" />
                 </div>
+                <div className="relative w-full max-w-xs">
+                    <input
+                        type="text"
+                        placeholder="Search candidate..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full bg-casino-secondary border border-gray-600 rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-casino-gold"
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Icon name="search" className="w-5 h-5 text-casino-text-muted" />
+                    </div>
+                </div>
             </div>
 
             <Card>
                 <div className="space-y-4">
-                    {filteredCandidates[activeTab].length > 0 ? (
-                        filteredCandidates[activeTab].map(candidate => (
+                    {currentList.length > 0 ? (
+                        currentList.map(candidate => (
                             <CandidateOfferCard key={candidate.id} candidate={candidate} activeTab={activeTab} />
                         ))
                     ) : (
                         <div className="text-center py-12">
                              <Icon name="users" className="w-16 h-16 text-casino-text-muted mx-auto mb-4" />
-                            <p className="text-casino-text-muted">No candidates in this stage.</p>
+                            <p className="text-casino-text-muted">No candidates in this stage {searchTerm && "matching your search"}.</p>
                         </div>
                     )}
                 </div>

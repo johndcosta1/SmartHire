@@ -158,7 +158,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentRole, candidates })
     const userActivity = useMemo(() => {
         const activity: Array<AuditLog & { candidateName: string; candidateId: string; }> = [];
         candidates.forEach(candidate => {
-            candidate.statusHistory.forEach(log => {
+            (candidate.statusHistory || []).forEach(log => {
                 if (log.role === currentRole) {
                     activity.push({
                         ...log,

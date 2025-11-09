@@ -21,6 +21,40 @@ const MetricCard: React.FC<{ title: string; value: string | number; icon: React.
     </div>
 );
 
+const BarChart: React.FC<{ data: Record<string, number> }> = ({ data }) => {
+  // FIX: Handle empty data object to avoid error with Math.max on an empty array.
+  const values = Object.values(data);
+  if (values.length === 0) {
+    return null;
+  }
+  const maxValue = Math.max(...values);
+  if (maxValue === 0) return null;
+  const colors = ['#3b82f6', '#22c55e', '#a855f7', '#eab308', '#ef4444', '#6366f1', '#ec4899', '#f97316'];
+
+  return (
+    <div className="w-full bg-casino-primary p-4 rounded-lg mb-4">
+      <div className="flex items-end h-56 space-x-4" aria-label="Hires by department chart">
+        {Object.entries(data).map(([dept, count], index) => (
+          <div key={dept} className="flex-1 flex flex-col items-center justify-end h-full">
+            <div className="text-sm font-bold text-casino-text mb-1" aria-hidden="true">{count}</div>
+            <div
+              className="w-full rounded-t-md transition-all duration-300 ease-in-out"
+              style={{
+                // FIX: Explicitly cast `count` to a number to prevent type error during arithmetic operation.
+                height: `${(Number(count) / maxValue) * 100}%`,
+                backgroundColor: colors[index % colors.length],
+              }}
+              role="presentation"
+              aria-label={`${dept}: ${count} hires`}
+            />
+            <div className="text-xs text-casino-text-muted mt-2 text-center w-full truncate" aria-hidden="true">{dept}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 
 export const Reports: React.FC<ReportsProps> = ({ candidates }) => {
 
@@ -77,14 +111,17 @@ export const Reports: React.FC<ReportsProps> = ({ candidates }) => {
 
           <Card title="New Hires by Department">
               {Object.keys(stats.hiresByDept).length > 0 ? (
-                <div className="space-y-3">
-                    {Object.entries(stats.hiresByDept).map(([dept, count]) => (
-                        <div key={dept} className="flex justify-between items-center bg-casino-primary p-3 rounded-md">
-                            <span className="font-semibold text-casino-text-muted">{dept}</span>
-                            <span className="font-bold text-casino-gold text-lg">{count}</span>
-                        </div>
-                    ))}
-                </div>
+                <>
+                  <BarChart data={stats.hiresByDept} />
+                  <div className="space-y-3 pt-4 border-t border-gray-700">
+                      {Object.entries(stats.hiresByDept).map(([dept, count]) => (
+                          <div key={dept} className="flex justify-between items-center bg-casino-primary p-3 rounded-md">
+                              <span className="font-semibold text-casino-text-muted">{dept}</span>
+                              <span className="font-bold text-casino-gold text-lg">{count}</span>
+                          </div>
+                      ))}
+                  </div>
+                </>
               ) : (
                 <p className="text-casino-text-muted text-center py-8">No hired candidates with department information yet.</p>
               )}

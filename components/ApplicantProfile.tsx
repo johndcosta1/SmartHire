@@ -93,8 +93,45 @@ const generateChangeLogs = (original: Candidate, updated: Candidate, user: strin
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
     };
+    
+    const arrayFields: Array<'qualifications' | 'workExperience' | 'references'> = ['qualifications', 'workExperience', 'references'];
+
+    arrayFields.forEach(field => {
+        const originalArray = (getValueFromPath(original, field) as any[]) || [];
+        const updatedArray = (getValueFromPath(updated, field) as any[]) || [];
+
+        if (safeJsonStringify(originalArray) !== safeJsonStringify(updatedArray)) {
+            if (updatedArray.length > originalArray.length) {
+                 const newItem = updatedArray[updatedArray.length - 1];
+                 const itemDescription = newItem.name || newItem.company || 'new item';
+                 logs.push({
+                    id: `log_${now}_${logs.length}`,
+                    timestamp: new Date().toISOString(),
+                    user, role,
+                    action: `Added ${formatKey(field).slice(0,-1)}: "${itemDescription}".`
+                 });
+            } else if (updatedArray.length < originalArray.length) {
+                 logs.push({
+                    id: `log_${now}_${logs.length}`,
+                    timestamp: new Date().toISOString(),
+                    user, role,
+                    action: `Removed an entry from ${formatKey(field)}.`
+                 });
+            } else {
+                logs.push({
+                    id: `log_${now}_${logs.length}`,
+                    timestamp: new Date().toISOString(),
+                    user, role,
+                    action: `Updated ${formatKey(field)} section.`
+                });
+            }
+        }
+    });
 
     fieldsToTrack.forEach(path => {
+         // Skip array fields already handled
+        if (arrayFields.some(field => path.startsWith(field))) return;
+
         const originalValue = getValueFromPath(original, path);
         const updatedValue = getValueFromPath(updated, path);
 
@@ -112,18 +149,7 @@ const generateChangeLogs = (original: Candidate, updated: Candidate, user: strin
             });
             return;
         }
-
-        if (Array.isArray(originalValue) || Array.isArray(updatedValue)) {
-            logs.push({
-                id: `log_${now}_${logs.length}`,
-                timestamp: new Date().toISOString(),
-                user,
-                role,
-                action: `${formatKey(path)} was updated.`
-            });
-            return;
-        }
-
+        
         const from = originalValue !== null && originalValue !== undefined && originalValue !== '' ? `from "${originalValue}"` : 'from empty';
         const to = updatedValue !== null && updatedValue !== undefined && updatedValue !== '' ? `to "${updatedValue}"` : 'to empty';
         
@@ -248,13 +274,51 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
   const [commenterName, setCommenterName] = useState('');
   const [commenterEmpId, setCommenterEmpId] = useState('');
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const loggedViewForId = useRef<string | null>(null);
+
   
   const canEdit = currentRole === UserRole.HR;
   const canEditJobSection = currentRole === UserRole.HR || currentRole === UserRole.HOD;
+  const canViewSensitiveInfo = [UserRole.Admin, UserRole.HR, UserRole.HOD].includes(currentRole);
 
   useEffect(() => {
     setFormData(sanitizeObject(originalCandidate));
   }, [originalCandidate]);
+  
+  useEffect(() => {
+    if (!originalCandidate || loggedViewForId.current === originalCandidate.id) return;
+
+    const addViewLog = async () => {
+        const history = originalCandidate.statusHistory || [];
+        const lastLog = history[history.length - 1];
+        
+        // Prevent logging view on own actions or rapid re-views from the same user
+        if (lastLog && lastLog.action.includes('viewed by') && lastLog.user === currentRole) {
+            const lastLogTime = new Date(lastLog.timestamp).getTime();
+            if (Date.now() - lastLogTime < 2 * 60 * 1000) { // 2 minute cooldown
+                return;
+            }
+        }
+        
+        const viewLog: AuditLog = {
+            id: `log_${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: currentRole,
+            role: currentRole,
+            action: `Profile viewed by ${currentRole}`
+        };
+
+        const updatedCandidate = {
+            ...originalCandidate,
+            statusHistory: [...history, viewLog]
+        };
+        
+        await updateCandidate(updatedCandidate);
+    };
+
+    addViewLog();
+    loggedViewForId.current = originalCandidate.id;
+}, [originalCandidate, currentRole, updateCandidate]);
 
   useEffect(() => {
     if (currentRole !== UserRole.HR || !formData || !formData.ratings || !formData.ratings.hr) return;
@@ -689,7 +753,8 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                   </div>
               </Card>
 
-               <Card title="HR Interview & Ratings">
+              {canViewSensitiveInfo && (
+                <Card title="HR Interview & Ratings">
                     <div>
                         {/* HR Evaluation Section */}
                         <div className="pt-4">
@@ -767,6 +832,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                         </div>
                     </div>
                 </Card>
+              )}
 
               {formData.preEmploymentTest && (
                 <Card title="Pre-Employment Test">
@@ -791,22 +857,24 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <FormField label="Job Role Applied For" name="vacancy" type="text" value={formData.vacancy} onChange={handleChange} placeholder="e.g., Senior Croupier" required disabled={!canEditJobSection} />
                       <FormField label="Department" name="department" type="select" options={DEPARTMENTS} value={formData.department || ''} onChange={handleChange} disabled={!canEditJobSection} />
-                      <FormField label="Expected Salary" name="expectedSalary" type="number" value={formData.expectedSalary} onChange={handleChange} disabled={!canEditJobSection} />
+                      {canViewSensitiveInfo && <FormField label="Expected Salary" name="expectedSalary" type="number" value={formData.expectedSalary} onChange={handleChange} disabled={!canEditJobSection} />}
                       <FormField label="Position Offered" name="positionOffered" value={formData.positionOffered || ''} onChange={handleChange} disabled={!canEditJobSection} />
                       <FormField label="Accommodation Required" name="accommodationRequired" type="checkbox" checked={formData.accommodationRequired} onChange={handleChange} disabled={!canEditJobSection} />
                       <FormField label="Transport Required" name="transportRequired" type="checkbox" checked={formData.transportRequired} onChange={handleChange} disabled={!canEditJobSection} />
                   </div>
-                   <div className="mt-6 pt-4 border-t border-gray-700">
+                   {canViewSensitiveInfo && (
+                    <div className="mt-6 pt-4 border-t border-gray-700">
                       <h4 className="text-lg font-semibold text-casino-text-muted mb-3">Other Evaluations</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <FormField label="Manager Total Rating (1-5)" name="ratings.manager.score" type="number" min="1" max="5" value={formData.ratings?.manager?.score || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
                           <FormField label="CM Total Rating (1-5)" name="ratings.cm.score" type="number" min="1" max="5" value={formData.ratings?.cm?.score || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
                           <FormField label="Department Interviewer Name" name="ratings.department.interviewer" value={formData.ratings?.department?.interviewer || ''} onChange={handleChange} disabled={currentRole !== UserRole.HOD}/>
                       </div>
-                  </div>
+                    </div>
+                   )}
               </Card>
 
-              {[
+              {canViewSensitiveInfo && [
                 ApplicationStatus.SurveillanceCleared,
                 ApplicationStatus.OfferAccepted,
                 ApplicationStatus.JoiningScheduled,
