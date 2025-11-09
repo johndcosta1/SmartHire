@@ -257,7 +257,8 @@ const StarRating: React.FC<{
           aria-label={`Rate ${star} out of 5`}
           disabled={disabled}
         >
-          ★
+          <span className="no-print-in-profile">★</span>
+          <span className="print-only-text">{star <= score ? '★' : '☆'}</span>
         </button>
       ))}
     </div>
