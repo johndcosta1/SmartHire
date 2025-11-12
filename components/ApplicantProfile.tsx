@@ -4,7 +4,7 @@ import { Candidate, UserRole, ApplicationStatus, AuditLog, Comment } from '../ty
 import { Card } from './common/Card';
 import { Badge } from './common/Badge';
 import { Icon } from './common/Icon';
-import { STATUS_COLORS, DEPARTMENTS, MARITAL_STATUSES } from '../constants';
+import { STATUS_COLORS, DEPARTMENTS, MARITAL_STATUSES, formatDate, formatDateTime } from '../constants';
 import { FormField } from './common/FormField';
 import { HiringStatusTracker } from './common/HiringStatusTracker';
 
@@ -508,7 +508,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
         return;
     }
     
-    const actionText = `Interview Scheduled for ${formData.interview.date} at ${formData.interview.time}`;
+    const actionText = `Interview Scheduled for ${formatDate(formData.interview.date)} at ${formData.interview.time}`;
 
     const updatedCandidate: Candidate = {
         ...formData,
@@ -840,7 +840,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                     <div className="flex justify-around items-center text-center">
                         <div>
                             <p className="text-casino-text-muted text-sm">Completed On</p>
-                            <p className="font-semibold text-casino-text">{new Date(formData.preEmploymentTest.completedAt).toLocaleDateString()}</p>
+                            <p className="font-semibold text-casino-text">{formatDate(formData.preEmploymentTest.completedAt)}</p>
                         </div>
                         <div>
                             <p className="text-casino-text-muted text-sm">Score</p>
@@ -985,7 +985,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                                         <p className="text-xs text-casino-text-muted">ID: {comment.empId}</p>
                                     </div>
                                 </div>
-                                <p className="text-xs text-casino-text-muted flex-shrink-0 ml-2">{new Date(comment.timestamp).toLocaleString()}</p>
+                                <p className="text-xs text-casino-text-muted flex-shrink-0 ml-2">{formatDateTime(comment.timestamp)}</p>
                             </div>
                             <p className="text-sm text-casino-text pl-11 whitespace-pre-wrap">{comment.comment}</p>
                         </li>
@@ -1004,7 +1004,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                     <div>
                       <p className="font-semibold text-casino-text">{log.action}</p>
                       <p className="text-xs text-casino-text-muted">{log.user} ({log.role})</p>
-                      <p className="text-xs text-casino-text-muted">{new Date(log.timestamp).toLocaleString()}</p>
+                      <p className="text-xs text-casino-text-muted">{formatDateTime(log.timestamp)}</p>
                     </div>
                   </li>
                 ))}
@@ -1030,7 +1030,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                                         <p className="text-xs text-casino-text-muted">ID: {comment.empId}</p>
                                     </div>
                                 </div>
-                                <p className="text-xs text-casino-text-muted flex-shrink-0 ml-2">{new Date(comment.timestamp).toLocaleString()}</p>
+                                <p className="text-xs text-casino-text-muted flex-shrink-0 ml-2">{formatDateTime(comment.timestamp)}</p>
                             </div>
                             <p className="text-sm text-casino-text pl-11 whitespace-pre-wrap">{comment.comment}</p>
                         </li>
@@ -1049,7 +1049,7 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                     <div>
                       <p className="font-semibold text-casino-text">{log.action}</p>
                       <p className="text-xs text-casino-text-muted">{log.user} ({log.role})</p>
-                      <p className="text-xs text-casino-text-muted">{new Date(log.timestamp).toLocaleString()}</p>
+                      <p className="text-xs text-casino-text-muted">{formatDateTime(log.timestamp)}</p>
                     </div>
                   </li>
                 ))}

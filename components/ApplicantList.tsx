@@ -7,7 +7,7 @@ import { Card } from './common/Card';
 import { Badge } from './common/Badge';
 import { Icon } from './common/Icon';
 import { AppContext } from '../App';
-import { DEPARTMENTS } from '../constants';
+import { DEPARTMENTS, formatDate } from '../constants';
 
 interface ApplicantListProps {
     candidates: Candidate[];
@@ -49,7 +49,7 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
             const values = [
                 candidate.id,
                 `"${candidate.fullName}"`,
-                candidate.dob,
+                formatDate(candidate.dob),
                 candidate.contact.phone,
                 candidate.contact.email,
                 `"${candidate.address.replace(/"/g, '""')}"`,
@@ -60,7 +60,7 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
                 candidate.accommodationRequired ? 'Yes' : 'No',
                 candidate.transportRequired ? 'Yes' : 'No',
                 candidate.status,
-                new Date(candidate.createdAt).toISOString()
+                formatDate(candidate.createdAt)
             ];
             csvRows.push(values.join(','));
         }
@@ -161,7 +161,7 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({ candidates }) => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{candidate.vacancy}</td>
                                     <td className="px-6 py-4 whitespace-nowrap"><Badge status={candidate.status} /></td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{new Date(candidate.createdAt).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{formatDate(candidate.createdAt)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text">{candidate.department || 'N/A'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <span className="text-casino-gold hover:text-yellow-400">View</span>

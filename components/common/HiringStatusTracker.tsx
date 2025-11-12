@@ -1,6 +1,7 @@
 import React from 'react';
 import { ApplicationStatus, Candidate, AuditLog, UserRole } from '../../types';
 import { Icon } from './Icon';
+import { formatDateTime } from '../../constants';
 
 interface HiringStatusTrackerProps {
   candidate: Candidate;
@@ -175,8 +176,7 @@ export const HiringStatusTracker: React.FC<HiringStatusTrackerProps> = ({ candid
                  {log && state !== 'pending' && (
                   <div className="text-center text-[10px] leading-tight text-casino-text-muted mt-1 w-24">
                     <p className="font-semibold truncate" title={log.user}>{log.user}</p>
-                    <p>{new Date(log.timestamp).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                    <p>{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p>{formatDateTime(log.timestamp)}</p>
                   </div>
                 )}
               </div>

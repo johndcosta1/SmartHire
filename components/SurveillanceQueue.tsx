@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Candidate, ApplicationStatus } from '../types';
 import { Card } from './common/Card';
 import { Icon } from './common/Icon';
+import { formatDate } from '../constants';
 
 interface SurveillanceQueueProps {
   candidates: Candidate[];
@@ -103,7 +104,7 @@ export const SurveillanceQueue: React.FC<SurveillanceQueueProps> = ({ candidates
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{candidate.vacancy}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{new Date(candidate.statusHistory.find(h => h.action.startsWith('Selected by'))?.timestamp || candidate.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{formatDate(candidate.statusHistory.find(h => h.action.startsWith('Selected by'))?.timestamp || candidate.createdAt)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-casino-text-muted">{candidate.interview?.interviewer || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button className="text-casino-gold hover:text-yellow-400 font-semibold cursor-pointer">View Profile</button>

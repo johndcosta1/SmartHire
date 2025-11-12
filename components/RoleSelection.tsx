@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from './common/Card';
 import { Icon } from './common/Icon';
@@ -12,6 +11,7 @@ export const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelectCandidate,
   return (
     <div className="bg-casino-primary min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-lg text-center">
+        <img src="https://bigdaddy.in/core/views/f6924b8174/assets/img/Horizontal_logo_transparent_header.png" alt="Big Daddy Casino Logo" className="mx-auto h-24 mb-4" />
         <h1 className="text-4xl font-bold text-casino-gold mb-2">Welcome to SmartHire</h1>
         <p className="text-casino-text-muted mb-8">Please select your entry point.</p>
         <div className="flex flex-col md:flex-row gap-6">
