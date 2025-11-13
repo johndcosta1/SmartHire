@@ -1,4 +1,5 @@
 
+
 import React, { useState, useContext, useRef } from 'react';
 import { AppContext } from '../App';
 import { Candidate, UserRole } from '../types';
@@ -223,10 +224,16 @@ export const CreateCandidateForm: React.FC<CreateCandidateFormProps> = ({ onSubm
                         {(formData.workExperience || []).map((w, i) => (
                              <div key={i} className="p-2 border border-gray-700 rounded mb-2 space-y-2">
                                 <div className="grid grid-cols-2 gap-2">
-                                    <input name="company" value={w.company} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1"/>
-                                    <input name="role" value={w.role} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Role" className="bg-casino-primary border-gray-600 rounded p-1"/>
-                                    <input name="from" value={w.from} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="From (YYYY-MM)" className="bg-casino-primary border-gray-600 rounded p-1"/>
-                                    <input name="to" value={w.to} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="To (YYYY-MM)" className="bg-casino-primary border-gray-600 rounded p-1"/>
+                                    <input name="company" value={w.company} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1 w-full"/>
+                                    <input name="role" value={w.role} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Role" className="bg-casino-primary border-gray-600 rounded p-1 w-full"/>
+                                    <div>
+                                        <label htmlFor={`workexp-from-${i}`} className="text-xs text-casino-text-muted">From</label>
+                                        <input id={`workexp-from-${i}`} type="date" name="from" value={w.from} onChange={(e) => handleRepeatingChange('workExperience', i, e)} className="bg-casino-primary border-gray-600 rounded p-1 w-full"/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor={`workexp-to-${i}`} className="text-xs text-casino-text-muted">To</label>
+                                        <input id={`workexp-to-${i}`} type="date" name="to" value={w.to} onChange={(e) => handleRepeatingChange('workExperience', i, e)} className="bg-casino-primary border-gray-600 rounded p-1 w-full"/>
+                                    </div>
                                 </div>
                             </div>
                         ))}

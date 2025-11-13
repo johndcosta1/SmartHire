@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ApplicationStatus, Candidate, AuditLog, UserRole } from '../../types';
 import { Icon } from './Icon';

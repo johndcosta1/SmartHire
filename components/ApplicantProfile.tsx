@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Candidate, UserRole, ApplicationStatus, AuditLog, Comment } from '../types';
@@ -726,10 +727,16 @@ export const ApplicantProfile: React.FC<ApplicantProfileProps> = ({ candidates, 
                       {(formData.workExperience || []).map((w, i) => (
                            <div key={i} className="repeating-section-item p-2 border border-gray-700 rounded mb-2 space-y-2">
                               <div className="grid grid-cols-2 gap-2">
-                                  <input name="company" value={w.company} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
-                                  <input name="role" value={w.role} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Role" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
-                                  <input name="from" value={w.from} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="From (YYYY-MM)" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
-                                  <input name="to" value={w.to} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="To (YYYY-MM)" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed" disabled={!canEdit}/>
+                                  <input name="company" value={w.company} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Company" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed w-full" disabled={!canEdit}/>
+                                  <input name="role" value={w.role} onChange={(e) => handleRepeatingChange('workExperience', i, e)} placeholder="Role" className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed w-full" disabled={!canEdit}/>
+                                  <div>
+                                      <label htmlFor={`profile-workexp-from-${i}`} className="text-xs text-casino-text-muted">From</label>
+                                      <input id={`profile-workexp-from-${i}`} type="date" name="from" value={w.from} onChange={(e) => handleRepeatingChange('workExperience', i, e)} className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed w-full" disabled={!canEdit}/>
+                                  </div>
+                                  <div>
+                                      <label htmlFor={`profile-workexp-to-${i}`} className="text-xs text-casino-text-muted">To</label>
+                                      <input id={`profile-workexp-to-${i}`} type="date" name="to" value={w.to} onChange={(e) => handleRepeatingChange('workExperience', i, e)} className="bg-casino-primary border-gray-600 rounded p-1 text-sm disabled:cursor-not-allowed w-full" disabled={!canEdit}/>
+                                  </div>
                               </div>
                           </div>
                       ))}
