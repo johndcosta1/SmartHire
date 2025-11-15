@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, createContext, useCallback, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, onValue, set, push, get } from 'firebase/database';
@@ -253,6 +254,7 @@ const App: React.FC = () => {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
   const [candidateTakingTest, setCandidateTakingTest] = useState<Candidate | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   useEffect(() => {
     const candidatesRef = ref(db, 'candidates');
@@ -264,9 +266,11 @@ const App: React.FC = () => {
             ...data[key],
         })) : [];
         setCandidates(candidatesData as Candidate[]);
+        setDbError(null);
     }, (error) => {
-        console.error("Error connecting to Firebase. Please ensure your `firebaseConfig.ts` is correct.", error);
-        alert("Could not connect to the database. Please check your Firebase configuration and internet connection.");
+        console.error("Firebase Realtime Database connection error:", error);
+        const errorMessage = `Failed to connect to the database.\n\nThis could be due to network issues or Firebase security rules restricting access from this website's domain (${window.location.hostname}).`;
+        setDbError(errorMessage);
     });
 
     const initializeApp = async () => {
@@ -283,13 +287,19 @@ const App: React.FC = () => {
             }
         } catch (error) {
             console.error("Error during initial data check/seed:", error);
+            const errorMessage = `Failed to initialize the database.\n\nThis could be due to network issues or Firebase security rules restricting access from this website's domain (${window.location.hostname}).`;
+            setDbError(errorMessage);
         }
         return setupListener();
     };
 
     let unsubscribe: () => void;
     initializeApp().then(unsub => {
-        unsubscribe = unsub;
+        if (unsub) unsubscribe = unsub;
+    }).catch(err => {
+        console.error("initializeApp failed:", err);
+        const errorMessage = `Failed to initialize the database connection.\n\nPlease check your Firebase configuration and security rules.`;
+        setDbError(errorMessage);
     });
 
     return () => {
@@ -355,6 +365,19 @@ const App: React.FC = () => {
         throw error;
     }
   }, []);
+
+  if (dbError) {
+    return (
+        <div className="bg-casino-primary min-h-screen flex items-center justify-center p-4">
+            <Card className="w-full max-w-2xl text-center">
+                <Icon name="x-circle" className="w-16 h-16 text-casino-danger mx-auto mb-4" />
+                <h1 className="text-2xl font-bold text-casino-danger mb-4">Database Connection Error</h1>
+                <p className="text-casino-text-muted whitespace-pre-wrap">{dbError}</p>
+                <p className="text-casino-text-muted mt-4">If you are the administrator, please ensure your Firebase Realtime Database security rules allow read/write access from this domain. You can also check the browser's developer console for more specific error details.</p>
+            </Card>
+        </div>
+    );
+  }
 
   const handleLoginSuccess = (role: UserRole) => {
     setCurrentRole(role);
