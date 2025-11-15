@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { UserRole } from '../types';
-import { Icon } from './common/Icon';
+import { UserRole } from '../types.ts';
+import { Icon } from './common/Icon.tsx';
 
 interface SidebarProps {
   currentRole: UserRole;

@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Candidate, ApplicationStatus, UserRole } from '../types';
-import { Card } from './common/Card';
-import { Badge } from './common/Badge';
-import { Icon } from './common/Icon';
-import { AppContext } from '../App';
-import { DEPARTMENTS, formatDate } from '../constants';
+import { Candidate, ApplicationStatus, UserRole } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Badge } from './common/Badge.tsx';
+import { Icon } from './common/Icon.tsx';
+import { AppContext } from '../App.tsx';
+import { DEPARTMENTS, formatDate } from '../constants.ts';
 
 interface ApplicantListProps {
     candidates: Candidate[];

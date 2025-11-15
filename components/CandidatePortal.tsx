@@ -1,8 +1,9 @@
+
 import React, { useState, useContext } from 'react';
-import { AppContext } from '../App';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
-import { FormField } from './common/FormField';
+import { AppContext } from '../App.tsx';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
+import { FormField } from './common/FormField.tsx';
 
 interface CandidatePortalProps {
   onLogout: () => void;

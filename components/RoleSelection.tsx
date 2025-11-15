@@ -1,6 +1,7 @@
+
 import React from 'react';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
 
 interface RoleSelectionProps {
   onSelectCandidate: () => void;

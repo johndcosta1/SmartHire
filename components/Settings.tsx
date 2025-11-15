@@ -1,11 +1,12 @@
 
+
 import React, { useContext, useState } from 'react';
-import { Candidate, UserRole } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
-import { USER_ROLES, JOB_ROLES, DEPARTMENTS } from '../constants';
-import { AppContext } from '../App';
-import { ImportModal } from './common/ImportModal';
+import { Candidate, UserRole } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
+import { USER_ROLES, JOB_ROLES, DEPARTMENTS } from '../constants.ts';
+import { AppContext } from '../App.tsx';
+import { ImportModal } from './common/ImportModal.tsx';
 
 interface SettingsProps {
   candidates: Candidate[];

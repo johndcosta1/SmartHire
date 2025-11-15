@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { ApplicationStatus } from '../../types';
-import { STATUS_COLORS } from '../../constants';
+import { ApplicationStatus } from '../../types.ts';
+import { STATUS_COLORS } from '../../constants.ts';
 
 interface BadgeProps {
   status: ApplicationStatus;

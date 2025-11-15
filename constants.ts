@@ -1,5 +1,5 @@
 
-import { Candidate, ApplicationStatus, UserRole } from './types';
+import { Candidate, ApplicationStatus, UserRole } from './types.ts';
 
 export const USER_ROLES: UserRole[] = [
   UserRole.HR,

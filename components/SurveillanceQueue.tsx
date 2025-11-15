@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Candidate, ApplicationStatus } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
-import { formatDate } from '../constants';
+import { Candidate, ApplicationStatus } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
+import { formatDate } from '../constants.ts';
 
 interface SurveillanceQueueProps {
   candidates: Candidate[];

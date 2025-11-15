@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { AppContext } from '../../App';
-import { Candidate, UserRole } from '../../types';
-import { Card } from '../common/Card';
-import { Icon } from '../common/Icon';
-import { TEST_QUESTIONS } from './testData';
+import { AppContext } from '../../App.tsx';
+import { Candidate, UserRole } from '../../types.ts';
+import { Card } from '../common/Card.tsx';
+import { Icon } from '../common/Icon.tsx';
+import { TEST_QUESTIONS } from './testData.ts';
 
 interface PreEmploymentTestProps {
   candidate: Candidate;

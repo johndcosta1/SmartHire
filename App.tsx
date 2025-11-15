@@ -3,24 +3,24 @@
 import React, { useState, createContext, useCallback, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, onValue, set, push, get } from 'firebase/database';
-import { db } from './firebaseConfig';
-import { UserRole, Candidate, ApplicationStatus } from './types';
-import { Sidebar } from './components/Sidebar';
-import { Header } from './components/Header';
-import { Dashboard } from './components/Dashboard';
-import { ApplicantList } from './components/ApplicantList';
-import { ApplicantProfile } from './components/ApplicantProfile';
-import { CreateCandidateForm } from './components/CreateCandidateForm';
-import { Login } from './components/Login';
-import { InterviewCalendar } from './components/InterviewCalendar';
-import { SurveillanceQueue } from './components/SurveillanceQueue';
-import { HROffers } from './components/HROffers';
-import { Reports } from './components/Reports';
-import { Settings } from './components/Settings';
-import { RoleSelection } from './components/RoleSelection';
-import { PreEmploymentTest } from './components/test/PreEmploymentTest';
-import { Card } from './components/common/Card';
-import { Icon } from './components/common/Icon';
+import { db } from './firebaseConfig.ts';
+import { UserRole, Candidate, ApplicationStatus } from './types.ts';
+import { Sidebar } from './components/Sidebar.tsx';
+import { Header } from './components/Header.tsx';
+import { Dashboard } from './components/Dashboard.tsx';
+import { ApplicantList } from './components/ApplicantList.tsx';
+import { ApplicantProfile } from './components/ApplicantProfile.tsx';
+import { CreateCandidateForm } from './components/CreateCandidateForm.tsx';
+import { Login } from './components/Login.tsx';
+import { InterviewCalendar } from './components/InterviewCalendar.tsx';
+import { SurveillanceQueue } from './components/SurveillanceQueue.tsx';
+import { HROffers } from './components/HROffers.tsx';
+import { Reports } from './components/Reports.tsx';
+import { Settings } from './components/Settings.tsx';
+import { RoleSelection } from './components/RoleSelection.tsx';
+import { PreEmploymentTest } from './components/test/PreEmploymentTest.tsx';
+import { Card } from './components/common/Card.tsx';
+import { Icon } from './components/common/Icon.tsx';
 
 const MOCK_CANDIDATES: Candidate[] = [
   {

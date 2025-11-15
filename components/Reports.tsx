@@ -1,9 +1,10 @@
+
 import React, { useMemo } from 'react';
-import { Candidate, ApplicationStatus, UserRole } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
-import { STATUS_COLORS } from '../constants';
-import { Badge } from './common/Badge';
+import { Candidate, ApplicationStatus, UserRole } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
+import { STATUS_COLORS } from '../constants.ts';
+import { Badge } from './common/Badge.tsx';
 
 interface ReportsProps {
   candidates: Candidate[];

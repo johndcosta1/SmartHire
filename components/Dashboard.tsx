@@ -1,8 +1,9 @@
+
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { UserRole, ApplicationStatus, Candidate, AuditLog } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
+import { UserRole, ApplicationStatus, Candidate, AuditLog } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
 
 interface DashboardProps {
   currentRole: UserRole;

@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { UserRole } from '../types';
-import { Icon } from './common/Icon';
+import { UserRole } from '../types.ts';
+import { Icon } from './common/Icon.tsx';
 
 interface HeaderProps {
   currentRole: UserRole;

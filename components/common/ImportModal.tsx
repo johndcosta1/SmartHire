@@ -1,10 +1,10 @@
 
 
 import React, { useRef } from 'react';
-import { Candidate } from '../../types';
-import { Card } from './Card';
-import { Icon } from './Icon';
-import { db } from '../../firebaseConfig';
+import { Candidate } from '../../types.ts';
+import { Card } from './Card.tsx';
+import { Icon } from './Icon.tsx';
+import { db } from '../../firebaseConfig.ts';
 import { ref, update } from 'firebase/database';
 
 interface ImportModalProps {

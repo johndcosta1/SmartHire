@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { ApplicationStatus, Candidate, AuditLog, UserRole } from '../../types';
-import { Icon } from './Icon';
-import { formatDateTime } from '../../constants';
+import { ApplicationStatus, Candidate, AuditLog, UserRole } from '../../types.ts';
+import { Icon } from './Icon.tsx';
+import { formatDateTime } from '../../constants.ts';
 
 interface HiringStatusTrackerProps {
   candidate: Candidate;

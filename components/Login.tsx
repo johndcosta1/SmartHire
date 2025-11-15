@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { UserRole } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
-import { USER_ROLES, ROLE_PASSWORDS } from '../constants';
+import { UserRole } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
+import { USER_ROLES, ROLE_PASSWORDS } from '../constants.ts';
 
 interface LoginProps {
   onLoginSuccess: (role: UserRole) => void;

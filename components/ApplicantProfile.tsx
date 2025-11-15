@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Candidate, UserRole, ApplicationStatus, AuditLog, Comment } from '../types';
-import { Card } from './common/Card';
-import { Badge } from './common/Badge';
-import { Icon } from './common/Icon';
-import { STATUS_COLORS, DEPARTMENTS, MARITAL_STATUSES, formatDate, formatDateTime } from '../constants';
-import { FormField } from './common/FormField';
-import { HiringStatusTracker } from './common/HiringStatusTracker';
+import { Candidate, UserRole, ApplicationStatus, AuditLog, Comment } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Badge } from './common/Badge.tsx';
+import { Icon } from './common/Icon.tsx';
+import { STATUS_COLORS, DEPARTMENTS, MARITAL_STATUSES, formatDate, formatDateTime } from '../constants.ts';
+import { FormField } from './common/FormField.tsx';
+import { HiringStatusTracker } from './common/HiringStatusTracker.tsx';
 
 /**
  * Creates a deep clone of an object, removing any circular references

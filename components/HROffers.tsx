@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Candidate, ApplicationStatus } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
+import { Candidate, ApplicationStatus } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
 
 interface HROffersProps {
     candidates: Candidate[];

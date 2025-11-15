@@ -34,7 +34,7 @@ const ICONS: Record<IconName, React.ReactElement> = {
 
 export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="_0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
       {ICONS[name]}
     </svg>
   );

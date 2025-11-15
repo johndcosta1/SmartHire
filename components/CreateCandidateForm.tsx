@@ -1,12 +1,12 @@
 
 
 import React, { useState, useContext, useRef } from 'react';
-import { AppContext } from '../App';
-import { Candidate, UserRole } from '../types';
-import { Card } from './common/Card';
-import { Icon } from './common/Icon';
-import { FormField } from './common/FormField';
-import { DEPARTMENTS, MARITAL_STATUSES } from '../constants';
+import { AppContext } from '../App.tsx';
+import { Candidate, UserRole } from '../types.ts';
+import { Card } from './common/Card.tsx';
+import { Icon } from './common/Icon.tsx';
+import { FormField } from './common/FormField.tsx';
+import { DEPARTMENTS, MARITAL_STATUSES } from '../constants.ts';
 
 type FormData = Omit<Candidate, 'id' | 'status' | 'statusHistory' | 'rejection' | 'interview' | 'surveillanceReport' | 'offer' | 'employeeId'> & {
     entryDate: string;
